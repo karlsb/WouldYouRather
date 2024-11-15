@@ -4,7 +4,7 @@ function App() {
   return (
     <div>
       <h1 className='text-3xl font-bold underline'>
-        Welcome
+        Welcome to my website, i hope you like it!
       </h1>
     </div>
   )
