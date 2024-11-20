@@ -1,7 +1,6 @@
 import { useState } from "react"
 
 
-
 //const url = "https://setuptest-442308.lm.r.appspot.com/random-pair"
 const devurl = "http://localhost:8080/random-pair"
 const devurlPost = "http://localhost:8080/store-answer"
@@ -27,7 +26,6 @@ function Card(props: CardProps){
       console.log("API call failed", res.status)
     }
     
-
   }
 
   return (
@@ -72,7 +70,6 @@ function App() {
           <button className="text-2xl font-bold"onClick={() => apiCall()}>Next</button>
         </div>
       </div>
-
     </div>
   )
 }

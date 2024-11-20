@@ -34,7 +34,8 @@ func (db Database) Close() {
 
 // NOW ONLY GETS TOP
 func (db Database) getRandomPair() TextPair {
-	rows, err := db.sqldb.Query("SELECT left, right FROM pairs")
+	// get number of rows pick an id in the range of num of rows
+	rows, err := db.sqldb.Query("SELECT left, right FROM pairs ORDER BY RANDOM() LIMIT 1")
 	if err != nil {
 		fmt.Println("error in db.Query")
 	}
