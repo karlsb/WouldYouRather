@@ -76,7 +76,10 @@ func (db Database) increaseCountAndReturnPair(choice Choice) TextPair {
 	err := db.sqldb.QueryRow(query, choice.Id).Scan(&pair.Id, &pair.Left, &pair.Right, &pair.Lcount, &pair.Rcount)
 	if err != nil {
 		fmt.Println("error in db.Query")
-		return pair
+		return pair //TODO this is a bad return
+	}
+
+	if choice.LeftRight == "right" {
 	}
 
 	return pair
