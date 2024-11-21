@@ -1,1 +1,4 @@
 runtime: go123
+env_variables:
+  ALLOWED_ORIGIN:"https://whatwouldyourather.netlify.app"
+  LOG_LEVEL:PROD

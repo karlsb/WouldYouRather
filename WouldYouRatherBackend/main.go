@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/joho/godotenv"
 	_ "modernc.org/sqlite" // fast but be careful, since it is written in CGO - might have compatibility issues
 )
 
@@ -128,14 +129,25 @@ func routeCheckMiddleware(expectedPath string, handler http.HandlerFunc) http.Ha
 
 func enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Origin", "https://whatwouldyourather.netlify.app") //TODO CHANGE HERE IF PRODUCTION
+		allowed_origin := os.Getenv("ALLOWED_ORIGIN")
+		w.Header().Set("Access-Control-Allow-Origin", allowed_origin)
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
 		if r.Method == http.MethodOptions {
 			w.WriteHeader((http.StatusNoContent))
 			return
+		}
+		next.ServeHTTP(w, r)
+	})
+
+}
+
+func loggerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log_level := os.Getenv("LOG_LEVEL")
+		if log_level == "DEV" {
+			log.Println(r.Body)
 		}
 		next.ServeHTTP(w, r)
 	})
@@ -177,6 +189,10 @@ func storeAnswer(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
 	db.init()
 	defer db.Close()
 
@@ -193,7 +209,7 @@ func main() {
 	}
 
 	log.Printf("Listening on port %s", port)
-	if err := http.ListenAndServe(":"+port, enableCORS(mux)); err != nil {
+	if err := http.ListenAndServe(":"+port, loggerMiddleware(enableCORS(mux))); err != nil {
 		log.Fatal(err)
 	}
 }

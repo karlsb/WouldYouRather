@@ -1,24 +1,30 @@
 import { useState } from "react"
 
-
-const url = "https://setuptest-442308.lm.r.appspot.com/random-pair"
-const urlPost = "https://setuptest-442308.lm.r.appspot.com/store-answer"
-//const devurl = "http://localhost:8080/random-pair"
-//const devurlPost = "http://localhost:8080/store-answer"
-
 type Pair = {
+  id: number
   left: string
   right: string
 }
 
-type CardProps = {
-  children: React.ReactNode
+enum LEFTRIGHT {
+  LEFT = "left",
+  RIGHT = "right"
 }
 
+type CardProps = {
+  children: React.ReactNode
+  leftright: LEFTRIGHT
+  id: number
+}
+
+const random_pair_url = import.meta.env.VITE_RANDOM_PAIR_URL
+const store_answer_url = import.meta.env.VITE_STORE_ANSWER_URL
+
+//TODO consider sending a full pair as props, to make it cleaner
 function Card(props: CardProps){
   const handleClick = async (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.preventDefault()
-    const res = await fetch(urlPost, {method:"POST", headers: {"Content-Type":"application/json"}}) //need to attach payload
+    const res = await fetch(store_answer_url, {method:"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({"id":props.id , "leftright": props.leftright })}) //need to attach payload
     if(res.ok) {
       const data = await res.json()
       console.log(data)
@@ -40,13 +46,13 @@ function Card(props: CardProps){
 
 
 function App() {
-  const [pair,setPair] = useState<Pair>({left:"Welcome to",right:"Would you rather"})
+  const [pair,setPair] = useState<Pair>({id:-1, left:"Welcome to",right:"Would you rather"})
 
   async function apiCall(){
-    const res = await fetch(url, {method:"GET", headers: {"Content-Type":"application/json"}})
+    const res = await fetch(random_pair_url, {method:"GET", headers: {"Content-Type":"application/json"}})
     if(res.ok) {
       const data = await res.json()
-      setPair({left:data.pair.left, right:data.pair.right})
+      setPair({id:data.pair.id, left:data.pair.left, right:data.pair.right})
     }
     else{
       console.log("API call failed", res.status)
@@ -63,8 +69,8 @@ function App() {
       <div className="h-5/6 bg-blue-100 flex flex-col justify-center items-center">{/* Main content*/}
         <div className="w-full h-5/6 flex justify-center items-center">
           <div className="w-3/5 h-4/5 flex">
-            <Card>{pair.left}</Card>
-            <Card>{pair.right}</Card>
+            <Card leftright={LEFTRIGHT.LEFT} id={pair.id}>{pair.left}</Card>
+            <Card leftright={LEFTRIGHT.RIGHT} id={pair.id}>{pair.right}</Card>
           </div>
         </div>
         <div className="" >
