@@ -1,9 +1,10 @@
 import { useState } from "react"
 
 
-//const url = "https://setuptest-442308.lm.r.appspot.com/random-pair"
-const devurl = "http://localhost:8080/random-pair"
-const devurlPost = "http://localhost:8080/store-answer"
+const url = "https://setuptest-442308.lm.r.appspot.com/random-pair"
+const urlPost = "https://setuptest-442308.lm.r.appspot.com/store-answer"
+//const devurl = "http://localhost:8080/random-pair"
+//const devurlPost = "http://localhost:8080/store-answer"
 
 type Pair = {
   left: string
@@ -17,7 +18,7 @@ type CardProps = {
 function Card(props: CardProps){
   const handleClick = async (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.preventDefault()
-    const res = await fetch(devurlPost, {method:"POST", headers: {"Content-Type":"application/json"}}) //need to attach payload
+    const res = await fetch(urlPost, {method:"POST", headers: {"Content-Type":"application/json"}}) //need to attach payload
     if(res.ok) {
       const data = await res.json()
       console.log(data)
@@ -42,7 +43,7 @@ function App() {
   const [pair,setPair] = useState<Pair>({left:"Welcome to",right:"Would you rather"})
 
   async function apiCall(){
-    const res = await fetch(devurl, {method:"GET", headers: {"Content-Type":"application/json"}})
+    const res = await fetch(url, {method:"GET", headers: {"Content-Type":"application/json"}})
     if(res.ok) {
       const data = await res.json()
       setPair({left:data.pair.left, right:data.pair.right})
@@ -66,8 +67,8 @@ function App() {
             <Card>{pair.right}</Card>
           </div>
         </div>
-        <div className="bg-slate-100 pl-3 pr-3 pt-1 pb-1 rounded-md shadow-md" >
-          <button className="text-2xl font-bold"onClick={() => apiCall()}>Next</button>
+        <div className="" >
+          <button className="btn"onClick={() => apiCall()}>Next</button>
         </div>
       </div>
     </div>

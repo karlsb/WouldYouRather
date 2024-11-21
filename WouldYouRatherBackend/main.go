@@ -12,9 +12,24 @@ import (
 )
 
 type TextPair struct {
-	Left  string `json:"left"`
-	Right string `json:"right"`
+	Id     int    `json:"id"`
+	Left   string `json:"left"`
+	Right  string `json:"right"`
+	Lcount int    `json:"lcount"`
+	Rcount int    `json:"rcount"`
 }
+
+type Choice struct {
+	Id        int    `json:"id"`
+	LeftRight string `json:"leftright"`
+}
+
+/*
+*  DATABASE
+*
+*
+*
+ */
 
 type Database struct {
 	sqldb *sql.DB
@@ -28,26 +43,51 @@ func (db *Database) init() {
 	db.sqldb = temp
 }
 
-func (db Database) Close() {
+func (db *Database) Close() {
 	db.sqldb.Close()
 }
 
 // NOW ONLY GETS TOP
 func (db Database) getRandomPair() TextPair {
 	// get number of rows pick an id in the range of num of rows
-	rows, err := db.sqldb.Query("SELECT left, right FROM pairs ORDER BY RANDOM() LIMIT 1")
+	rows, err := db.sqldb.Query("SELECT id, left, right, lcount, rcount FROM pairs ORDER BY RANDOM() LIMIT 1")
 	if err != nil {
 		fmt.Println("error in db.Query")
 	}
 	defer rows.Close()
 
-	var left string
-	var right string
+	var pair TextPair
+
 	for rows.Next() {
-		rows.Scan(&left, &right)
+		rows.Scan(&pair.Id, &pair.Left, &pair.Right, &pair.Lcount, &pair.Rcount)
 	}
-	return TextPair{Left: left, Right: right}
+	return pair
 }
+
+func (db Database) increaseCountAndReturnPair(choice Choice) TextPair {
+	query := "UPDATE pairs SET lcount = lcount + 1 WHERE id = ? RETURNING id, left, right, lcount, rcount"
+	if choice.LeftRight == "right" {
+		query = "UPDATE pairs SET rcount = rcount + 1 WHERE id = ? RETURNING id, left, right, lcount, rcount"
+	}
+
+	var pair TextPair
+
+	err := db.sqldb.QueryRow(query, choice.Id).Scan(&pair.Id, &pair.Left, &pair.Right, &pair.Lcount, &pair.Rcount)
+	if err != nil {
+		fmt.Println("error in db.Query")
+		return pair
+	}
+
+	return pair
+
+}
+
+/*
+*  API ROUTES
+*
+*
+*
+ */
 
 type Message struct {
 	Status string   `json:"status"`
@@ -88,8 +128,8 @@ func routeCheckMiddleware(expectedPath string, handler http.HandlerFunc) http.Ha
 
 func enableCORS(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		//w.Header().Set("Access-Control-Allow-Origin", "https://whatwouldyourather.netlify.app") //TODO CHANGE HERE IF PRODUCTION
+		//w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", "https://whatwouldyourather.netlify.app") //TODO CHANGE HERE IF PRODUCTION
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 
@@ -102,6 +142,40 @@ func enableCORS(next http.Handler) http.Handler {
 
 }
 
+func storeAnswer(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var choice Choice
+
+	decoder := json.NewDecoder(r.Body)
+	if err := decoder.Decode(&choice); err != nil {
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
+		return
+	}
+	defer r.Body.Close()
+
+	if choice.LeftRight != "right" && choice.LeftRight != "left" {
+		http.Error(w, "Invalid value of field leftright", http.StatusBadRequest)
+		return
+	}
+
+	response := Message{
+		Status: "success",
+		Pair:   db.increaseCountAndReturnPair(choice),
+	}
+
+	// TODO I can break this out into its own method
+	w.Header().Set("Content-Type", "application/json")
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Failed to encdode JSON", http.StatusInternalServerError)
+	}
+
+}
+
 func main() {
 	db.init()
 	defer db.Close()
@@ -110,6 +184,7 @@ func main() {
 
 	mux.HandleFunc("/", routeCheckMiddleware("/", indexHandler))
 	mux.HandleFunc("/random-pair", routeCheckMiddleware("/random-pair", getRandomPairHandler))
+	mux.HandleFunc("/store-answer", routeCheckMiddleware("/store-answer", storeAnswer))
 
 	port := os.Getenv("PORT")
 	if port == "" {
