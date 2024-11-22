@@ -60,6 +60,11 @@ jobs:
         working-directory: ./WouldYouRatherClient
         run: npm install
 
+      - name: Install Netlify-CLI
+        if: matrix.service == 'frontend'
+        working-directory: ./WouldYouRatherClient
+        run: npm install netlify-cli/17.37.2 -g
+
       - name: Build Frontend
         if: matrix.service == 'frontend'
         working-directory: ./WouldYouRatherClient
