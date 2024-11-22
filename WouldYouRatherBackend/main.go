@@ -7,7 +7,10 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
+	"time"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	_ "modernc.org/sqlite" // fast but be careful, since it is written in CGO - might have compatibility issues
 )
@@ -24,6 +27,9 @@ type Choice struct {
 	Id        int    `json:"id"`
 	LeftRight string `json:"leftright"`
 }
+
+// -----UUID: string - pairIDs: []int
+var SeenPairs = make(map[string][]int)
 
 /*
 *  DATABASE
@@ -48,10 +54,27 @@ func (db *Database) Close() {
 	db.sqldb.Close()
 }
 
+func createGetRandomPairQueryString(userID string) (string, []interface{}) {
+	placeholders := make([]string, len(SeenPairs[userID]))
+	args := make([]interface{}, len(SeenPairs[userID]))
+	for i, id := range SeenPairs[userID] {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	// Create the query string
+	queryString := fmt.Sprintf(
+		"SELECT id, left, right, lcount, rcount FROM pairs WHERE id NOT IN (%s) ORDER BY RANDOM() LIMIT 1",
+		strings.Join(placeholders, ","),
+	)
+	return queryString, args
+}
+
 // NOW ONLY GETS TOP
-func (db Database) getRandomPair() TextPair {
+func (db Database) getRandomPair(userID string) TextPair {
 	// get number of rows pick an id in the range of num of rows
-	rows, err := db.sqldb.Query("SELECT id, left, right, lcount, rcount FROM pairs ORDER BY RANDOM() LIMIT 1")
+	queryString, args := createGetRandomPairQueryString(userID)
+	rows, err := db.sqldb.Query(queryString, args...)
 	if err != nil {
 		fmt.Println("error in db.Query")
 	}
@@ -103,59 +126,37 @@ var db Database
 
 func getRandomPairHandler(w http.ResponseWriter, r *http.Request) {
 	//respond with json
+	cookie, err := r.Cookie("user_id")
+	if err != nil {
+		newUserID := uuid.New().String()
+		cookie = &http.Cookie{
+			Name:    "user_id",
+			Value:   newUserID,
+			Path:    "/",
+			Expires: time.Now().Add(24 * time.Hour),
+		}
+		log.Println("Generated new user ID:", newUserID)
+		log.Println("cookie created: ", cookie)
+	} else {
+		log.Println("we have a cookie: ", cookie)
+	}
 
 	response := Message{
 		Status: "success",
-		Pair:   db.getRandomPair(),
+		Pair:   db.getRandomPair(cookie.Value),
 	}
 
+	SeenPairs[cookie.Value] = append(SeenPairs[cookie.Value], response.Pair.Id)
 	w.Header().Set("Content-Type", "application/json")
-
+	http.SetCookie(w, cookie)
+	log.Println("Headers", w.Header())
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encdode JSON", http.StatusInternalServerError)
 	}
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello, World!")
-}
-
-// a template for middleware, can use for logging aswell?
-func routeCheckMiddleware(expectedPath string, handler http.HandlerFunc) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != expectedPath {
-			http.NotFound(w, r)
-			return
-		}
-		handler(w, r)
-	}
-}
-
-func enableCORS(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		allowed_origin := os.Getenv("ALLOWED_ORIGIN")
-		w.Header().Set("Access-Control-Allow-Origin", allowed_origin)
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-
-		if r.Method == http.MethodOptions {
-			w.WriteHeader((http.StatusNoContent))
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-
-}
-
-func loggerMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log_level := os.Getenv("LOG_LEVEL")
-		if log_level == "DEV" {
-			log.Println(r.Body)
-		}
-		next.ServeHTTP(w, r)
-	})
-
+	fmt.Fprint(w, "Hello There")
 }
 
 func storeAnswer(w http.ResponseWriter, r *http.Request) {
@@ -163,6 +164,12 @@ func storeAnswer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	cookie, err := r.Cookie("user_id")
+	if err != nil {
+		http.Error(w, "Invalid cookie", http.StatusBadRequest)
+	}
+
+	log.Println("cookie: ", cookie)
 
 	var choice Choice
 
@@ -183,12 +190,58 @@ func storeAnswer(w http.ResponseWriter, r *http.Request) {
 		Pair:   db.increaseCountAndReturnPair(choice),
 	}
 
+	value, exists := SeenPairs[cookie.Value]
+	if !exists {
+		log.Fatal("we dont have a SeenPair value of: ", cookie.Value)
+	} else {
+		log.Println(value)
+	}
+
 	// TODO I can break this out into its own method
 	w.Header().Set("Content-Type", "application/json")
 
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encdode JSON", http.StatusInternalServerError)
 	}
+
+}
+
+// a template for middleware, can use for logging aswell?
+func routeCheckMiddleware(expectedPath string, handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != expectedPath {
+			http.NotFound(w, r)
+			return
+		}
+		handler(w, r)
+	}
+}
+
+func enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		allowed_origin := os.Getenv("ALLOWED_ORIGIN")
+		w.Header().Set("Access-Control-Allow-Origin", allowed_origin)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader((http.StatusNoContent))
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+
+}
+
+func loggerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		//log_level := os.Getenv("LOG_LEVEL")
+		//if log_level == "DEV" {
+		//log.Println(r.Body)
+		//}
+		next.ServeHTTP(w, r)
+	})
 
 }
 
@@ -199,6 +252,10 @@ func main() {
 	}
 	db.init()
 	defer db.Close()
+
+	//TESTTING
+
+	//
 
 	mux := http.NewServeMux()
 

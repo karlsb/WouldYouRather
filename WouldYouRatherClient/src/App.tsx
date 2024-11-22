@@ -12,6 +12,9 @@ type CardProps = {
   handleClick: (e:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
 
+
+
+
 const random_pair_url = import.meta.env.VITE_RANDOM_PAIR_URL
 const store_answer_url = import.meta.env.VITE_STORE_ANSWER_URL
 
@@ -50,7 +53,7 @@ function CardWrapper(props: CardWrapperProps) {
   const handleClick = async (leftright: string, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.preventDefault()
     if(!choiceMade) {
-      const res = await fetch(store_answer_url, {method:"POST", headers: {"Content-Type":"application/json"}, body: JSON.stringify({"id":props.pair.id , "leftright": leftright })}) //need to attach payload
+      const res = await fetch(store_answer_url, {method:"POST", credentials:"include", headers: {"Content-Type":"application/json"}, body: JSON.stringify({"id":props.pair.id , "leftright": leftright })}) //need to attach payload
       if(res.ok) {
         const data = await res.json()
         const lpercentage = data.pair.lcount * 100 / (data.pair.lcount + data.pair.rcount) 
@@ -79,8 +82,10 @@ function App() {
   const [pair,setPair] = useState<Pair>({id:-1, left:"Welcome to",right:"Would you rather"})
 
   async function apiCall(){
-    const res = await fetch(random_pair_url, {method:"GET", headers: {"Content-Type":"application/json"}})
+    const res = await fetch(random_pair_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
+    console.log(res)
     if(res.ok) {
+      console.log(document.cookie)
       const data = await res.json()
       setPair({id:data.pair.id, left:data.pair.left, right:data.pair.right})
     }
@@ -88,6 +93,10 @@ function App() {
       console.log("API call failed", res.status)
     }
   }
+
+  useEffect(() => {
+    apiCall()
+  },[])
 
   return (
     <div className="h-screen bg-slate-100">
