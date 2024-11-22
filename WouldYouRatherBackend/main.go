@@ -66,24 +66,25 @@ func (db Database) getRandomPair() TextPair {
 }
 
 func (db Database) increaseCountAndReturnPair(choice Choice) TextPair {
-	query := "UPDATE pairs SET lcount = lcount + 1 WHERE id = ? RETURNING id, left, right, lcount, rcount"
+	update_query := "UPDATE pairs SET lcount = lcount + 1 WHERE id = ?"
 	if choice.LeftRight == "right" {
-		query = "UPDATE pairs SET rcount = rcount + 1 WHERE id = ? RETURNING id, left, right, lcount, rcount"
+		update_query = "UPDATE pairs SET rcount = rcount + 1 WHERE id = ?"
 	}
+
+	select_query := "SELECT * FROM pairs WHERE id = ? LIMIT 1"
 
 	var pair TextPair
 
-	err := db.sqldb.QueryRow(query, choice.Id).Scan(&pair.Id, &pair.Left, &pair.Right, &pair.Lcount, &pair.Rcount)
+	_, err := db.sqldb.Exec(update_query, choice.Id)
 	if err != nil {
-		fmt.Println("error in db.Query")
-		return pair //TODO this is a bad return
+		fmt.Println("error in db.Exec: ", update_query, "| With ?  = ", choice.Id)
 	}
-
-	if choice.LeftRight == "right" {
+	err = db.sqldb.QueryRow(select_query, choice.Id).Scan(&pair.Id, &pair.Left, &pair.Right, &pair.Lcount, &pair.Rcount)
+	if err != nil {
+		fmt.Println("error in db.QueryRow: ", select_query, " | With ? = ", choice.Id)
 	}
 
 	return pair
-
 }
 
 /*
