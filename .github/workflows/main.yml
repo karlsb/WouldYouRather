@@ -40,6 +40,7 @@ jobs:
           go build -o backend-app
 
       - name: Setup Google Cloud CLI
+        if: matrix.service == 'backend'
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: ${{ secrets.GCP_PROJECT_ID }}
@@ -47,6 +48,7 @@ jobs:
           export_default_credentials: true
 
       - name: Deploy to Google App Engine
+        if: matrix.service == 'backend'
         uses: google-github-actions/deploy-appengine@v0.2.0
         with:
           deliverables: app.yaml
