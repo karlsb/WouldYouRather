@@ -15,7 +15,6 @@ type CardProps = {
 const random_pair_url = import.meta.env.VITE_RANDOM_PAIR_URL
 const store_answer_url = import.meta.env.VITE_STORE_ANSWER_URL
 
-//TODO consider sending a full pair as props, to make it cleaner
 function Card(props: CardProps){
   const [text, setText] = useState("")
 
