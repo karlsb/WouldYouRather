@@ -1,0 +1,77 @@
+name: Deploy Backend and Frontend
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build and Deploy Backend and Frontend
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [backend, frontend]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        if: matrix.service == 'backend'
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.23 
+          
+      - name: Install Backend Dependencies
+        if: matrix.service == 'backend'
+        run: |
+          cd WouldYouRatherBackend
+          go mod tidy
+
+      - name: Build Backend
+        if: matrix.service == 'backend'
+        run: |
+          cd WouldYouRatherBackend
+          go build -o backend-app
+
+      - name: Deploy Backend to GCP
+        if: matrix.service == 'backend'
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+        run: |
+          cd WouldYouRatherBackend
+          echo "$GCP_SA_KEY" | base64 --decode > gcp-key.json
+          gcloud auth activate-service-account --key-file=gcp-key.json
+          gcloud app deploy app.yaml --quiet
+
+      - name: Set up Node.js
+        if: matrix.service == 'frontend'
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          
+      - name: Install Frontend Dependencies
+        if: matrix.service == 'frontend'
+        run: |
+          cd WouldYouRatherClient
+          npm install
+
+      - name: Build Frontend
+        if: matrix.service == 'frontend'
+        run: |
+          cd WouldYouRatherClient
+          npm run build
+
+      - name: Deploy Frontend to Netlify
+        if: matrix.service == 'frontend'
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: |
+          cd WouldYouRatherClient
+          npx netlify deploy --dir=dist --prod --auth $NETLIFY_AUTH_TOKEN --site $NETLIFY_SITE_ID
