@@ -35,16 +35,16 @@ jobs:
 
       - name: Build Backend
         if: matrix.service == 'backend'
-        run: |
-          cd WouldYouRatherBackend
+        working-directory: ./WouldYouRatherBackend
+        run: 
           go build -o backend-app
 
       - name: Deploy Backend to GCP
         if: matrix.service == 'backend'
+        working-directory: ./WouldYouRatherBackend
         env:
           GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         run: |
-          cd WouldYouRatherBackend
           echo "$GCP_SA_KEY" | base64 --decode > gcp-key.json
           gcloud auth activate-service-account --key-file=gcp-key.json
           gcloud app deploy app.yaml --quiet
@@ -57,21 +57,19 @@ jobs:
           
       - name: Install Frontend Dependencies
         if: matrix.service == 'frontend'
-        run: |
-          cd WouldYouRatherClient
-          npm install
+        working-directory: ./WouldYouRatherClient
+        run: npm install
 
       - name: Build Frontend
         if: matrix.service == 'frontend'
-        run: |
-          cd WouldYouRatherClient
-          npm run build
+        working-directory: ./WouldYouRatherClient
+        run: npm run build
 
       - name: Deploy Frontend to Netlify
         if: matrix.service == 'frontend'
+        working-directory: ./WouldYouRatherClient
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         run: |
-          cd WouldYouRatherClient
           npx netlify deploy --dir=dist --prod --auth $NETLIFY_AUTH_TOKEN --site $NETLIFY_SITE_ID
