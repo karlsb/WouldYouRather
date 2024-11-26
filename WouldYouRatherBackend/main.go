@@ -56,9 +56,10 @@ func (db *Database) Close() {
 }
 
 func createGetRandomPairQueryString(userID string) (string, []interface{}) {
-	if len(SeenPairs[userID]) == NUMBER_OF_PAIRS {
-		SeenPairs = make(map[string][]int) //TODO bind this to a custom datastrucure for clarity
-	}
+	//	if len(SeenPairs[userID]) == NUMBER_OF_PAIRS {
+	//SeenPairs = make(map[string][]int) //TODO bind this to a custom datastrucure for clarity
+	////add allPairsSeen true to response
+	//}
 	placeholders := make([]string, len(SeenPairs[userID]))
 	args := make([]interface{}, len(SeenPairs[userID]))
 	for i, id := range SeenPairs[userID] {
@@ -123,8 +124,9 @@ func (db Database) increaseCountAndReturnPair(choice Choice) TextPair {
  */
 
 type Message struct {
-	Status string   `json:"status"`
-	Pair   TextPair `json:"pair"`
+	Status       string   `json:"status"`
+	Pair         TextPair `json:"pair"`
+	AllPairsSeen bool     `json:"allPairsSeen"`
 }
 
 var db Database
@@ -149,8 +151,15 @@ func getRandomPairHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response := Message{
-		Status: "success",
-		Pair:   db.getRandomPair(cookie.Value),
+		Status:       "success",
+		Pair:         db.getRandomPair(cookie.Value),
+		AllPairsSeen: false,
+	}
+
+	if len(SeenPairs[cookie.Value]) == NUMBER_OF_PAIRS {
+		SeenPairs = make(map[string][]int) //TODO bind this to a custom datastrucure for clarity
+		//add allPairsSeen true to response
+		response.AllPairsSeen = true
 	}
 
 	log.Println("getRandomPairHandler: ", SeenPairs)

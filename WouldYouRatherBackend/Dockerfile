@@ -19,7 +19,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o main .
 FROM ubuntu:24.04
 
 WORKDIR /app
-#COPY .env /app/.env
+COPY .env /app/.env
 COPY --from=builder /app/main /app/main
 COPY --from=builder /app/build-database/*.db /app/build-database/
 

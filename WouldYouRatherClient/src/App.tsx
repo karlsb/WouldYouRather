@@ -6,6 +6,22 @@ type Pair = {
   right: string
 }
 
+const random_pair_url = import.meta.env.VITE_RANDOM_PAIR_URL
+const store_answer_url = import.meta.env.VITE_STORE_ANSWER_URL
+
+type EndMessageProps = {
+  handleClick: React.MouseEventHandler<HTMLButtonElement>
+}
+
+function EndMessage(props: EndMessageProps){
+  return (
+    <div className="flex font-mono text-2xl font-bold">
+      <h1>You have finished all questions! come back another time or</h1>
+      <button onClick={props.handleClick} className="underline ml-2">Play again!</button>
+    </div>
+  )
+}
+
 type CardProps = {
   text : string
   id: number
@@ -14,12 +30,6 @@ type CardProps = {
   showPercent: boolean
   handleClick: (e:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
-
-
-
-
-const random_pair_url = import.meta.env.VITE_RANDOM_PAIR_URL
-const store_answer_url = import.meta.env.VITE_STORE_ANSWER_URL
 
 function Card(props: CardProps){
   const [text, setText] = useState("")
@@ -41,7 +51,6 @@ function Card(props: CardProps){
     </>
   )  
 }
-
 
 type CardWrapperProps = {
   pair: Pair
@@ -92,19 +101,32 @@ function CardWrapper(props: CardWrapperProps) {
 function App() {
   const [pair,setPair] = useState<Pair>({id:-1, left:"Welcome to",right:"Would you rather"})
   const [start, setStart] = useState(true)
+  const [allPairsSeen, setAllPairsSeen] = useState(false)
 
   //fetch new pair from server
   async function fetchPair(){
     const res = await fetch(random_pair_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
-    console.log(res)
+    //console.log(res)
     if(res.ok) {
-      console.log(document.cookie)
+      //console.log(document.cookie)
       const data = await res.json()
+      console.log(data)
+      if(data.allPairsSeen){
+        console.log("We have seen all pairs")
+        setAllPairsSeen(true)
+      }
       setPair({id:data.pair.id, left:data.pair.left, right:data.pair.right})
     }
     else{
       console.log("API call failed", res.status)
     }
+  }
+
+
+  function handlePlayAgain(){
+    setAllPairsSeen(false)
+    setPair({id:-1, left:"Welcome to",right:"Would you rather"})
+    setStart(true)
   }
 
   //start the game
@@ -122,13 +144,17 @@ function App() {
       </div>
       <div className="h-5/6 bg-base-100 flex flex-col justify-center items-center">{/* Main content*/}
         <div className="w-full h-5/6 flex justify-center items-center">
-          <CardWrapper pair={pair}></CardWrapper>
-        </div>
-        <div className="" >
-          {start ? <button onClick={handleOnStart} className="btn bg-white border-0 shadow-none text-lg">Start</button>: 
-            <button onClick={() => fetchPair()} className="btn bg-white border-0 shadow-none text-lg">Next</button>
+          {allPairsSeen ? <EndMessage handleClick={handlePlayAgain}></EndMessage> : 
+            <CardWrapper pair={pair}></CardWrapper>
           }
         </div>
+        {allPairsSeen ? <></> :  
+          <div>
+            { start ? <button onClick={handleOnStart} className="btn bg-white border-0 shadow-none text-lg">Start</button>: 
+              <button onClick={() => fetchPair()} className="btn bg-white border-0 shadow-none text-lg">Next</button>
+            }
+          </div>
+        }
       </div>
     </div>
   )
