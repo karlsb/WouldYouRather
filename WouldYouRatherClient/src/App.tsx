@@ -91,8 +91,10 @@ function CardWrapper(props: CardWrapperProps) {
 
 function App() {
   const [pair,setPair] = useState<Pair>({id:-1, left:"Welcome to",right:"Would you rather"})
+  const [start, setStart] = useState(true)
 
-  async function apiCall(){
+  //fetch new pair from server
+  async function fetchPair(){
     const res = await fetch(random_pair_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
     console.log(res)
     if(res.ok) {
@@ -105,9 +107,11 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    apiCall()
-  },[])
+  //start the game
+  function handleOnStart() {
+    setStart(false)
+    fetchPair()
+  }
 
   return (
     <div className="h-screen">
@@ -121,7 +125,9 @@ function App() {
           <CardWrapper pair={pair}></CardWrapper>
         </div>
         <div className="" >
-          <button className="btn bg-white border-0 shadow-none text-lg"onClick={() => apiCall()}>Next</button>
+          {start ? <button onClick={handleOnStart} className="btn bg-white border-0 shadow-none text-lg">Start</button>: 
+            <button onClick={() => fetchPair()} className="btn bg-white border-0 shadow-none text-lg">Next</button>
+          }
         </div>
       </div>
     </div>
