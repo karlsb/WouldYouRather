@@ -9,6 +9,9 @@ type Pair = {
 type CardProps = {
   text : string
   id: number
+  side: string
+  percent: number
+  showPercent: boolean
   handleClick: (e:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
 
@@ -21,14 +24,19 @@ const store_answer_url = import.meta.env.VITE_STORE_ANSWER_URL
 function Card(props: CardProps){
   const [text, setText] = useState("")
 
+  let classes = props.side === "left" ?
+      "border-r-2 flex justify-center items-center m-0 auto w-1/2 p-6 hover:bg-gray-100 "
+    : "flex justify-center items-center m-0 auto w-1/2 p-6 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+
   useEffect(() => {
     setText(props.text)
   },[props])
+ 
   
   return (
     <>
-      <div onClick = {props.handleClick} className="flex justify-center items-center m-0 auto w-1/2 p-6 bg-white border border-gray-200 rounded-lg shadow hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700">
-        <h2 className="font-bold text-2xl text-gray-700 dark:text-gray-400">{text}</h2>
+      <div onClick = {props.handleClick} className={classes}>
+        <h2 className="font-mono font-bold text-2xl text-gray-700 dark:text-gray-400">{text}</h2>
       </div>
     </>
   )  
@@ -42,6 +50,8 @@ type CardWrapperProps = {
 function CardWrapper(props: CardWrapperProps) {
   const [rightText, setRightText] = useState("")
   const [leftText, setLeftText] = useState("")
+  const [leftPercent, setLeftPercent] = useState(0)
+  const [rightPercent, setRightPercent] = useState(0)
   const [choiceMade, setChoiceMade] = useState(false)
 
   useEffect(() => {
@@ -58,8 +68,10 @@ function CardWrapper(props: CardWrapperProps) {
         const data = await res.json()
         const lpercentage = data.pair.lcount * 100 / (data.pair.lcount + data.pair.rcount) 
         const rpercentage = data.pair.rcount * 100 / (data.pair.lcount + data.pair.rcount)  
-        setLeftText(leftText + " " + lpercentage.toFixed(0).toString() + "% Picked this option")
-        setRightText(rightText + " " + rpercentage.toFixed(0).toString()+ "% Picked this option")
+        setLeftText(lpercentage.toFixed(0).toString() + "% Picked this option")
+        setLeftPercent(lpercentage)
+        setRightText(rpercentage.toFixed(0).toString()+ "% Picked this option")
+        setRightPercent(rpercentage)
         setChoiceMade(true)
       }
       else{
@@ -71,8 +83,8 @@ function CardWrapper(props: CardWrapperProps) {
 
   return (
           <div className="w-3/5 h-4/5 flex">
-            <Card handleClick={(e) => handleClick("left", e)} text={leftText} id={props.pair.id}></Card>
-            <Card handleClick={(e) => handleClick("right", e)} text={rightText} id={props.pair.id}></Card>
+            <Card handleClick={(e) => handleClick("left", e)} side="left" percent={leftPercent} showPercent={choiceMade} text={leftText} id={props.pair.id}></Card>
+            <Card handleClick={(e) => handleClick("right", e)} side="right" percent={rightPercent} showPercent={choiceMade} text={rightText} id={props.pair.id}></Card>
           </div>
   )
 }
@@ -99,18 +111,18 @@ function App() {
   },[])
 
   return (
-    <div className="h-screen bg-slate-100">
-      <div className="h-1/6 bg-blue-400 flex justify-center items-center"> {/* NavBar */}
-        <h1 className='text-3xl flex font-bold underline'>
-          Would You Rather, Programmer edition
+    <div className="h-screen">
+      <div className="h-1/6 flex justify-center items-center"> {/* NavBar */}
+        <h1 className='text-3xl flex font-mono font-bold underline'>
+          Would You Rather - Programmer edition
         </h1>
       </div>
-      <div className="h-5/6 bg-blue-100 flex flex-col justify-center items-center">{/* Main content*/}
+      <div className="h-5/6 bg-base-100 flex flex-col justify-center items-center">{/* Main content*/}
         <div className="w-full h-5/6 flex justify-center items-center">
           <CardWrapper pair={pair}></CardWrapper>
         </div>
         <div className="" >
-          <button className="btn"onClick={() => apiCall()}>Next</button>
+          <button className="btn bg-white border-0 shadow-none text-lg"onClick={() => apiCall()}>Next</button>
         </div>
       </div>
     </div>

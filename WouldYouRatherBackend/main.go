@@ -30,6 +30,7 @@ type Choice struct {
 
 // -----UUID: string - pairIDs: []int
 var SeenPairs = make(map[string][]int)
+var NUMBER_OF_PAIRS int = 10
 
 /*
 *  DATABASE
@@ -55,6 +56,9 @@ func (db *Database) Close() {
 }
 
 func createGetRandomPairQueryString(userID string) (string, []interface{}) {
+	if len(SeenPairs[userID]) == NUMBER_OF_PAIRS {
+		SeenPairs = make(map[string][]int) //TODO bind this to a custom datastrucure for clarity
+	}
 	placeholders := make([]string, len(SeenPairs[userID]))
 	args := make([]interface{}, len(SeenPairs[userID]))
 	for i, id := range SeenPairs[userID] {
@@ -100,11 +104,12 @@ func (db Database) increaseCountAndReturnPair(choice Choice) TextPair {
 
 	_, err := db.sqldb.Exec(update_query, choice.Id)
 	if err != nil {
-		fmt.Println("error in db.Exec: ", update_query, "| With ?  = ", choice.Id)
+		log.Println("error in db.Exec: ", update_query, "| With ?  = ", choice.Id)
+		log.Println("Db error massege:", err)
 	}
 	err = db.sqldb.QueryRow(select_query, choice.Id).Scan(&pair.Id, &pair.Left, &pair.Right, &pair.Lcount, &pair.Rcount)
 	if err != nil {
-		fmt.Println("error in db.QueryRow: ", select_query, " | With ? = ", choice.Id)
+		log.Println("error in db.QueryRow: ", select_query, " | With ? = ", choice.Id)
 	}
 
 	return pair
@@ -130,10 +135,12 @@ func getRandomPairHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		newUserID := uuid.New().String()
 		cookie = &http.Cookie{
-			Name:    "user_id",
-			Value:   newUserID,
-			Path:    "/",
-			Expires: time.Now().Add(24 * time.Hour),
+			Name:     "user_id",
+			Value:    newUserID,
+			Path:     "/",
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
+			Expires:  time.Now().Add(24 * time.Hour),
 		}
 		log.Println("Generated new user ID:", newUserID)
 		log.Println("cookie created: ", cookie)
@@ -146,10 +153,12 @@ func getRandomPairHandler(w http.ResponseWriter, r *http.Request) {
 		Pair:   db.getRandomPair(cookie.Value),
 	}
 
+	log.Println("getRandomPairHandler: ", SeenPairs)
+	//TODO possibly move this to getRandonPair logic
 	SeenPairs[cookie.Value] = append(SeenPairs[cookie.Value], response.Pair.Id)
+	log.Println("getRandomPairHandler: ", SeenPairs)
 	w.Header().Set("Content-Type", "application/json")
 	http.SetCookie(w, cookie)
-	log.Println("Headers", w.Header())
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, "Failed to encdode JSON", http.StatusInternalServerError)
 	}
@@ -169,7 +178,11 @@ func storeAnswer(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid cookie", http.StatusBadRequest)
 	}
 
-	log.Println("cookie: ", cookie)
+	if cookie.Value == "" {
+		log.Println("Cookie value is empty")
+		http.Error(w, "Invalid cookie value", http.StatusBadRequest)
+		return
+	}
 
 	var choice Choice
 
@@ -190,6 +203,8 @@ func storeAnswer(w http.ResponseWriter, r *http.Request) {
 		Pair:   db.increaseCountAndReturnPair(choice),
 	}
 
+	log.Println("storeAnswerHandler - cookie value: ", cookie.Value)
+	log.Println("storeAnsweHandler - map:", SeenPairs)
 	value, exists := SeenPairs[cookie.Value]
 	if !exists {
 		log.Fatal("we dont have a SeenPair value of: ", cookie.Value)
@@ -226,7 +241,7 @@ func enableCORS(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 
 		if r.Method == http.MethodOptions {
-			w.WriteHeader((http.StatusNoContent))
+			w.WriteHeader(http.StatusOK)
 			return
 		}
 		next.ServeHTTP(w, r)
@@ -246,9 +261,11 @@ func loggerMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	if os.Getenv("ENV") != "production" {
+		err := godotenv.Load()
+		if err != nil {
+			log.Fatal("Error loading .env file")
+		}
 	}
 	db.init()
 	defer db.Close()

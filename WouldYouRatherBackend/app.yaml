@@ -1,5 +1,7 @@
-runtime: go123
+runtime: custom
+env: flex
 
 env_variables:
   ALLOWED_ORIGIN: "https://whatwouldyourather.netlify.app"
   LOG_LEVEL: "PROD"
+  ENV: production
