@@ -51,7 +51,7 @@ jobs:
         if: matrix.service == 'backend'
         uses: google-github-actions/deploy-appengine@v0.2.0
         with:
-          deliverables: app.yaml
+          deliverables: WouldYouRatherBackend/app.yaml
           project_id: ${{ secrets.GCP_PROJECT_ID }}
           credentials: ${{ secrets.GCP_SA_KEY }}
           promote: true
