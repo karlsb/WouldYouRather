@@ -36,7 +36,7 @@ function Card(props: CardProps){
   return (
     <>
       <div onClick = {props.handleClick} className={classes}>
-        <h2 className="font-mono font-bold text-2xl text-gray-700 dark:text-gray-400">{text}</h2>
+        <h2 className="text-center font-mono font-bold text-2xl text-gray-700 dark:text-gray-400">{text}</h2>
       </div>
     </>
   )  
@@ -79,7 +79,6 @@ function CardWrapper(props: CardWrapperProps) {
       }
     }
   }
-
 
   return (
           <div className="w-3/5 h-4/5 flex">
