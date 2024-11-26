@@ -9,15 +9,17 @@ type Pair = {
 const random_pair_url = import.meta.env.VITE_RANDOM_PAIR_URL
 const store_answer_url = import.meta.env.VITE_STORE_ANSWER_URL
 
-type EndMessageProps = {
-  handleClick: React.MouseEventHandler<HTMLButtonElement>
+type DisplayMessageProps = {
+  handleClick?: React.MouseEventHandler<HTMLButtonElement>
+  headingText?: string
+  buttonText?: string
 }
 
-function EndMessage(props: EndMessageProps){
+function DisplayMessage(props: DisplayMessageProps){
   return (
     <div className="flex font-mono text-2xl font-bold">
-      <h1>You have finished all questions! come back another time or</h1>
-      <button onClick={props.handleClick} className="underline ml-2">Play again!</button>
+      <h1>{props.headingText}</h1>
+      <button onClick={props.handleClick} className="underline ml-2">{props.buttonText}</button>
     </div>
   )
 }
@@ -97,23 +99,26 @@ function CardWrapper(props: CardWrapperProps) {
   )
 }
 
-
 function App() {
   const [pair,setPair] = useState<Pair>({id:-1, left:"Welcome to",right:"Would you rather"})
-  const [start, setStart] = useState(true)
-  const [allPairsSeen, setAllPairsSeen] = useState(false)
+
+  enum State {
+    START = 1,
+    PLAY = 2,
+    END = 3,
+  }
+
+  const [gameState, setGameState] = useState(State.START)
 
   //fetch new pair from server
   async function fetchPair(){
     const res = await fetch(random_pair_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
-    //console.log(res)
     if(res.ok) {
-      //console.log(document.cookie)
       const data = await res.json()
       console.log(data)
       if(data.allPairsSeen){
         console.log("We have seen all pairs")
-        setAllPairsSeen(true)
+        setGameState(State.END)
       }
       setPair({id:data.pair.id, left:data.pair.left, right:data.pair.right})
     }
@@ -122,17 +127,41 @@ function App() {
     }
   }
 
-
   function handlePlayAgain(){
-    setAllPairsSeen(false)
+    setGameState(State.START)
     setPair({id:-1, left:"Welcome to",right:"Would you rather"})
-    setStart(true)
   }
 
   //start the game
-  function handleOnStart() {
-    setStart(false)
+  function handleOnPlay() {
+    setGameState(State.PLAY)
     fetchPair()
+  }
+
+
+  //TODO make a render switch statement with 3 states - start, playing, endstate - render this function the div
+  //TODO where the allPairsSeen is being rendered now
+
+  const mainContent = () => {
+    switch(gameState){ 
+      case State.START:
+        return (<DisplayMessage headingText="Welcome to Would you rather, press start to play"></DisplayMessage>)
+      case State.PLAY:
+        return (<CardWrapper pair={pair}></CardWrapper>)
+      case State.END:
+        return (<DisplayMessage handleClick={handlePlayAgain} buttonText="Play again!" headingText="You have finished all questions! come back another time or"></DisplayMessage>)
+      }
+  } 
+
+  const startNexButton = () => {
+    switch(gameState){
+      case State.START:
+        return (<button onClick={handleOnPlay} className="btn bg-white border-0 shadow-none text-lg">Start</button>)
+      case State.PLAY:
+        return (<button onClick={() => fetchPair()} className="btn bg-white border-0 shadow-none text-lg">Next</button>)
+      case State.END:
+        return <></>
+    }
   }
 
   return (
@@ -144,17 +173,9 @@ function App() {
       </div>
       <div className="h-5/6 bg-base-100 flex flex-col justify-center items-center">{/* Main content*/}
         <div className="w-full h-5/6 flex justify-center items-center">
-          {allPairsSeen ? <EndMessage handleClick={handlePlayAgain}></EndMessage> : 
-            <CardWrapper pair={pair}></CardWrapper>
-          }
+        {mainContent()}
         </div>
-        {allPairsSeen ? <></> :  
-          <div>
-            { start ? <button onClick={handleOnStart} className="btn bg-white border-0 shadow-none text-lg">Start</button>: 
-              <button onClick={() => fetchPair()} className="btn bg-white border-0 shadow-none text-lg">Next</button>
-            }
-          </div>
-        }
+        {startNexButton()}
       </div>
     </div>
   )

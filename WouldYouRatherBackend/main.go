@@ -30,7 +30,7 @@ type Choice struct {
 
 // -----UUID: string - pairIDs: []int
 var SeenPairs = make(map[string][]int)
-var NUMBER_OF_PAIRS int = 10
+var NUMBER_OF_PAIRS int = 0
 
 /*
 *  DATABASE
@@ -53,6 +53,19 @@ func (db *Database) init() {
 
 func (db *Database) Close() {
 	db.sqldb.Close()
+}
+
+//TODO: get number of pairs -> a function that returns the number of rows in the table pairs
+
+func (db *Database) getNumberOfPairs() int {
+	num := 0
+	query := "SELECT COUNT(id) FROM pairs"
+	err := db.sqldb.QueryRow(query).Scan(&num)
+	if err != nil {
+		log.Println("Error in executing getNumberOfRowsQuery: ", query)
+	}
+
+	return num
 }
 
 func createGetRandomPairQueryString(userID string) (string, []interface{}) {
@@ -174,7 +187,7 @@ func getRandomPairHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, "Hello There")
+	fmt.Fprint(w, "Welcome to the wouldyourather API")
 }
 
 func storeAnswer(w http.ResponseWriter, r *http.Request) {
@@ -230,6 +243,22 @@ func storeAnswer(w http.ResponseWriter, r *http.Request) {
 
 }
 
+func handleGetNumberOfPairs(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	type Integer struct {
+		Value int `json:"value"`
+	}
+	var response Integer
+	response.Value = db.getNumberOfPairs()
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Println("Error in encoding response in handleGetNumberOfPairs: ", err)
+	}
+}
+
 // a template for middleware, can use for logging aswell?
 func routeCheckMiddleware(expectedPath string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -278,16 +307,18 @@ func main() {
 	}
 	db.init()
 	defer db.Close()
+	NUMBER_OF_PAIRS = db.getNumberOfPairs()
 
-	//TESTTING
-
-	//
+	if NUMBER_OF_PAIRS == 0 {
+		panic("NUMBER_OF_PAIRS SHOULD NOT BE 0. CHECK YOUR DATABASE")
+	}
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", routeCheckMiddleware("/", indexHandler))
 	mux.HandleFunc("/random-pair", routeCheckMiddleware("/random-pair", getRandomPairHandler))
 	mux.HandleFunc("/store-answer", routeCheckMiddleware("/store-answer", storeAnswer))
+	mux.HandleFunc("/get-number-of-pairs", routeCheckMiddleware("/get-number-of-pairs", handleGetNumberOfPairs))
 
 	port := os.Getenv("PORT")
 	if port == "" {
