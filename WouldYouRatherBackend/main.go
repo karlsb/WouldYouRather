@@ -46,7 +46,7 @@ type Database struct {
 func (db *Database) init() {
 	temp, err := sql.Open("sqlite", "./build-database/wouldyourather.db")
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Failed to Open Database", err)
 	}
 	db.sqldb = temp
 }
@@ -54,8 +54,6 @@ func (db *Database) init() {
 func (db *Database) Close() {
 	db.sqldb.Close()
 }
-
-//TODO: get number of pairs -> a function that returns the number of rows in the table pairs
 
 func (db *Database) getNumberOfPairs() int {
 	num := 0
@@ -69,10 +67,6 @@ func (db *Database) getNumberOfPairs() int {
 }
 
 func createGetRandomPairQueryString(userID string) (string, []interface{}) {
-	//	if len(SeenPairs[userID]) == NUMBER_OF_PAIRS {
-	//SeenPairs = make(map[string][]int) //TODO bind this to a custom datastrucure for clarity
-	////add allPairsSeen true to response
-	//}
 	placeholders := make([]string, len(SeenPairs[userID]))
 	args := make([]interface{}, len(SeenPairs[userID]))
 	for i, id := range SeenPairs[userID] {
@@ -80,7 +74,6 @@ func createGetRandomPairQueryString(userID string) (string, []interface{}) {
 		args[i] = id
 	}
 
-	// Create the query string
 	queryString := fmt.Sprintf(
 		"SELECT id, left, right, lcount, rcount FROM pairs WHERE id NOT IN (%s) ORDER BY RANDOM() LIMIT 1",
 		strings.Join(placeholders, ","),
@@ -88,9 +81,7 @@ func createGetRandomPairQueryString(userID string) (string, []interface{}) {
 	return queryString, args
 }
 
-// NOW ONLY GETS TOP
 func (db Database) getRandomPair(userID string) TextPair {
-	// get number of rows pick an id in the range of num of rows
 	queryString, args := createGetRandomPairQueryString(userID)
 	rows, err := db.sqldb.Query(queryString, args...)
 	if err != nil {
@@ -118,12 +109,11 @@ func (db Database) increaseCountAndReturnPair(choice Choice) TextPair {
 
 	_, err := db.sqldb.Exec(update_query, choice.Id)
 	if err != nil {
-		log.Println("error in db.Exec: ", update_query, "| With ?  = ", choice.Id)
-		log.Println("Db error massege:", err)
+		log.Println("error in db.Exec: ", update_query, "| With ?  = ", choice.Id, " - ", err)
 	}
 	err = db.sqldb.QueryRow(select_query, choice.Id).Scan(&pair.Id, &pair.Left, &pair.Right, &pair.Lcount, &pair.Rcount)
 	if err != nil {
-		log.Println("error in db.QueryRow: ", select_query, " | With ? = ", choice.Id)
+		log.Println("Error in db.QueryRow: ", select_query, " | With ? = ", choice.Id)
 	}
 
 	return pair
@@ -136,7 +126,7 @@ func (db Database) increaseCountAndReturnPair(choice Choice) TextPair {
 *
  */
 
-type Message struct {
+type Response struct {
 	Status       string   `json:"status"`
 	Pair         TextPair `json:"pair"`
 	AllPairsSeen bool     `json:"allPairsSeen"`
@@ -157,13 +147,9 @@ func getRandomPairHandler(w http.ResponseWriter, r *http.Request) {
 			SameSite: http.SameSiteNoneMode,
 			Expires:  time.Now().Add(24 * time.Hour),
 		}
-		log.Println("Generated new user ID:", newUserID)
-		log.Println("cookie created: ", cookie)
-	} else {
-		log.Println("we have a cookie: ", cookie)
 	}
 
-	response := Message{
+	response := Response{
 		Status:       "success",
 		Pair:         db.getRandomPair(cookie.Value),
 		AllPairsSeen: false,
@@ -171,14 +157,10 @@ func getRandomPairHandler(w http.ResponseWriter, r *http.Request) {
 
 	if len(SeenPairs[cookie.Value]) == NUMBER_OF_PAIRS {
 		SeenPairs = make(map[string][]int) //TODO bind this to a custom datastrucure for clarity
-		//add allPairsSeen true to response
 		response.AllPairsSeen = true
 	}
 
-	log.Println("getRandomPairHandler: ", SeenPairs)
-	//TODO possibly move this to getRandonPair logic
 	SeenPairs[cookie.Value] = append(SeenPairs[cookie.Value], response.Pair.Id)
-	log.Println("getRandomPairHandler: ", SeenPairs)
 	w.Header().Set("Content-Type", "application/json")
 	http.SetCookie(w, cookie)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -197,12 +179,13 @@ func storeAnswer(w http.ResponseWriter, r *http.Request) {
 	}
 	cookie, err := r.Cookie("user_id")
 	if err != nil {
+		log.Println("ClientError in StoreAnswer: Cookie from client has no field user_id")
 		http.Error(w, "Invalid cookie", http.StatusBadRequest)
 	}
 
 	if cookie.Value == "" {
-		log.Println("Cookie value is empty")
-		http.Error(w, "Invalid cookie value", http.StatusBadRequest)
+		log.Println("ClientError in StoreAnswer: Cookie value from client is empty")
+		http.Error(w, "Invalid cookie", http.StatusBadRequest)
 		return
 	}
 
@@ -210,34 +193,31 @@ func storeAnswer(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	if err := decoder.Decode(&choice); err != nil {
+		log.Println("ClientError in StoreAnswer: Failed to Decode JSON")
 		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
 	if choice.LeftRight != "right" && choice.LeftRight != "left" {
+		log.Println("ClientError in StoreAnswer: Invalid value in Choice field in client JSON")
 		http.Error(w, "Invalid value of field leftright", http.StatusBadRequest)
 		return
 	}
 
-	response := Message{
+	response := Response{
 		Status: "success",
 		Pair:   db.increaseCountAndReturnPair(choice),
 	}
 
-	log.Println("storeAnswerHandler - cookie value: ", cookie.Value)
-	log.Println("storeAnsweHandler - map:", SeenPairs)
-	value, exists := SeenPairs[cookie.Value]
+	_, exists := SeenPairs[cookie.Value]
 	if !exists {
-		log.Fatal("we dont have a SeenPair value of: ", cookie.Value)
-	} else {
-		log.Println(value)
+		log.Println("ClientError in StoreAnswer: Invalid user id in cookie.Value. Client provided: ", cookie.Value)
+		http.Error(w, "Invalid Cookie", http.StatusBadRequest)
 	}
 
-	// TODO I can break this out into its own method
-	w.Header().Set("Content-Type", "application/json")
-
 	if err := json.NewEncoder(w).Encode(response); err != nil {
+		log.Println("ServerError in StoreAnswer: Failed to encode JSON", cookie.Value)
 		http.Error(w, "Failed to encdode JSON", http.StatusInternalServerError)
 	}
 
@@ -255,11 +235,10 @@ func handleGetNumberOfPairs(w http.ResponseWriter, r *http.Request) {
 	var response Integer
 	response.Value = db.getNumberOfPairs()
 	if err := json.NewEncoder(w).Encode(response); err != nil {
-		log.Println("Error in encoding response in handleGetNumberOfPairs: ", err)
+		log.Println("ServerError in encoding response in handleGetNumberOfPairs: ", err)
 	}
 }
 
-// a template for middleware, can use for logging aswell?
 func routeCheckMiddleware(expectedPath string, handler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != expectedPath {
@@ -287,17 +266,6 @@ func enableCORS(next http.Handler) http.Handler {
 
 }
 
-func loggerMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//log_level := os.Getenv("LOG_LEVEL")
-		//if log_level == "DEV" {
-		//log.Println(r.Body)
-		//}
-		next.ServeHTTP(w, r)
-	})
-
-}
-
 func main() {
 	if os.Getenv("ENV") != "production" {
 		err := godotenv.Load()
@@ -310,7 +278,7 @@ func main() {
 	NUMBER_OF_PAIRS = db.getNumberOfPairs()
 
 	if NUMBER_OF_PAIRS == 0 {
-		panic("NUMBER_OF_PAIRS SHOULD NOT BE 0. CHECK YOUR DATABASE")
+		log.Println("WARNING: NUMBER_OF_PAIRS SHOULD NOT BE 0. CHECK YOUR DATABASE")
 	}
 
 	mux := http.NewServeMux()
@@ -327,7 +295,7 @@ func main() {
 	}
 
 	log.Printf("Listening on port %s", port)
-	if err := http.ListenAndServe(":"+port, loggerMiddleware(enableCORS(mux))); err != nil {
-		log.Fatal(err)
+	if err := http.ListenAndServe(":"+port, enableCORS(mux)); err != nil {
+		log.Fatal("ERROR in ListenAndServe, check your provided port number", err)
 	}
 }

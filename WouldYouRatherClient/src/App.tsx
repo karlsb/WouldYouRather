@@ -86,7 +86,7 @@ function CardWrapper(props: CardWrapperProps) {
         setChoiceMade(true)
       }
       else{
-        console.log("API call failed", res.status)
+        //console.log("API call failed", res.status)
       }
     }
   }
@@ -115,9 +115,9 @@ function App() {
     const res = await fetch(random_pair_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
     if(res.ok) {
       const data = await res.json()
-      console.log(data)
+      //console.log(data)
       if(data.allPairsSeen){
-        console.log("We have seen all pairs")
+        //console.log("We have seen all pairs")
         setGameState(State.END)
       }
       setPair({id:data.pair.id, left:data.pair.left, right:data.pair.right})
@@ -129,7 +129,7 @@ function App() {
 
   function handlePlayAgain(){
     setGameState(State.START)
-    setPair({id:-1, left:"Welcome to",right:"Would you rather"})
+    setPair({id:-1, left:"",right:""})
   }
 
   //start the game
