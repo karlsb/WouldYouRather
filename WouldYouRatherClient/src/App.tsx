@@ -109,9 +109,10 @@ type NavBarProps = {
   handleChangeTheme: (newTheme: string) => void
 }
 function NavBar(props: NavBarProps) {
+
   return (
       <div className="h-1/6 flex justify-center items-center relative bg-secondary px-4" >
-        <h1 className="text-3xl font-mono font-bold underline animate-fade text-accent mx-auto">
+        <h1 className="text-3xl font-extrabold animate-fade text-accent mx-auto">
           Would You Rather - Programmer edition
         </h1>
       <div className="absolute right-40">
