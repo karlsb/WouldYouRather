@@ -54,8 +54,8 @@ function Card(props: CardProps){
   const [text, setText] = useState("")
 
   let classes = props.side === "left" ?
-        "flex rounded-full justify-center mr-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
-      : "flex justify-center rounded-full ml-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
+        "flex flex-1 flex-col justify-center items-center rounded-full mr-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
+      : "flex flex-1 flex-col justify-center items-center rounded-full ml-2 m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
 
   useEffect(() => {
     setText(props.text)
@@ -112,7 +112,7 @@ function CardWrapper(props: CardWrapperProps) {
   }
 
   return (
-          <div className="w-3/5 h-20 flex animate-in slide-in-from-left bg-primary">
+          <div className="w-3/5 flex flex-wrap animate-in slide-in-from-left bg-primary">
             <Card handleClick={(e) => handleClick("left", e)} side="left" percent={leftPercent} showPercent={choiceMade} text={leftText} id={props.pair.id}></Card>
             <Card handleClick={(e) => handleClick("right", e)} side="right" percent={rightPercent} showPercent={choiceMade} text={rightText} id={props.pair.id}></Card>
           </div>
