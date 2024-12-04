@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react"
 
+
+// colors from : https://colorhunt.co/palette/89a8b2b3c8cfe5e1daf1f0e8
+
 type Pair = {
   id: number
   left: string
@@ -24,6 +27,20 @@ function DisplayMessage(props: DisplayMessageProps){
   )
 }
 
+
+type TextProps = {
+  text: string
+}
+function Text(props:TextProps) {
+  const [displayText, setDisplayText] = useState("")
+  useEffect(() => {
+    setDisplayText(props.text)
+  },[props.text])
+  return (
+    <span key={displayText} className="animate-fade">{displayText}</span>
+  )
+}
+
 type CardProps = {
   text : string
   id: number
@@ -37,18 +54,17 @@ function Card(props: CardProps){
   const [text, setText] = useState("")
 
   let classes = props.side === "left" ?
-      "border-r-2 flex justify-center items-center m-0 auto w-1/2 p-6 hover:bg-gray-100 "
-    : "flex justify-center items-center m-0 auto w-1/2 p-6 hover:bg-gray-100 dark:bg-gray-800 dark:border-gray-700 dark:hover:bg-gray-700"
+        "flex rounded-full justify-center mr-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
+      : "flex justify-center rounded-full ml-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
 
   useEffect(() => {
     setText(props.text)
   },[props])
  
-  
   return (
     <>
       <div onClick = {props.handleClick} className={classes}>
-        <h2 className="text-center font-mono font-bold text-2xl text-gray-700 dark:text-gray-400">{text}</h2>
+        <h2 key={text} className="text-center font-mono font-bold text-2xl animate-fade text-light" >{text}</h2>
       </div>
     </>
   )  
@@ -56,6 +72,7 @@ function Card(props: CardProps){
 
 type CardWrapperProps = {
   pair: Pair
+  handleAnswer?: (e:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
 
 function CardWrapper(props: CardWrapperProps) {
@@ -73,6 +90,9 @@ function CardWrapper(props: CardWrapperProps) {
 
   const handleClick = async (leftright: string, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.preventDefault()
+    if(props.handleAnswer){
+      props.handleAnswer(e)
+    }
     if(!choiceMade) {
       const res = await fetch(store_answer_url, {method:"POST", credentials:"include", headers: {"Content-Type":"application/json"}, body: JSON.stringify({"id":props.pair.id , "leftright": leftright })}) //need to attach payload
       if(res.ok) {
@@ -92,7 +112,7 @@ function CardWrapper(props: CardWrapperProps) {
   }
 
   return (
-          <div className="w-3/5 h-4/5 flex">
+          <div className="w-3/5 h-20 flex animate-in slide-in-from-left bg-primary">
             <Card handleClick={(e) => handleClick("left", e)} side="left" percent={leftPercent} showPercent={choiceMade} text={leftText} id={props.pair.id}></Card>
             <Card handleClick={(e) => handleClick("right", e)} side="right" percent={rightPercent} showPercent={choiceMade} text={rightText} id={props.pair.id}></Card>
           </div>
@@ -105,19 +125,19 @@ function App() {
   enum State {
     START = 1,
     PLAY = 2,
-    END = 3,
+    ANSWERED =3,
+    END = 4,
   }
 
   const [gameState, setGameState] = useState(State.START)
 
   //fetch new pair from server
   async function fetchPair(){
+    setGameState(State.PLAY)
     const res = await fetch(random_pair_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
     if(res.ok) {
       const data = await res.json()
-      //console.log(data)
       if(data.allPairsSeen){
-        //console.log("We have seen all pairs")
         setGameState(State.END)
       }
       setPair({id:data.pair.id, left:data.pair.left, right:data.pair.right})
@@ -132,12 +152,16 @@ function App() {
     setPair({id:-1, left:"",right:""})
   }
 
+  function handleAnswer(e: React.MouseEvent<HTMLDivElement, MouseEvent>){
+    e.preventDefault()
+    setGameState(State.ANSWERED)
+  }
+
   //start the game
   function handleOnPlay() {
     setGameState(State.PLAY)
     fetchPair()
   }
-
 
   //TODO make a render switch statement with 3 states - start, playing, endstate - render this function the div
   //TODO where the allPairsSeen is being rendered now
@@ -147,6 +171,8 @@ function App() {
       case State.START:
         return (<DisplayMessage headingText="Welcome to Would you rather, press start to play"></DisplayMessage>)
       case State.PLAY:
+        return (<CardWrapper handleAnswer={handleAnswer} pair={pair}></CardWrapper>)
+      case State.ANSWERED:
         return (<CardWrapper pair={pair}></CardWrapper>)
       case State.END:
         return (<DisplayMessage handleClick={handlePlayAgain} buttonText="Play again!" headingText="You have finished all questions! come back another time or"></DisplayMessage>)
@@ -156,22 +182,24 @@ function App() {
   const startNexButton = () => {
     switch(gameState){
       case State.START:
-        return (<button onClick={handleOnPlay} className="btn bg-white border-0 shadow-none text-lg">Start</button>)
+        return (<button onClick={handleOnPlay} className="btn border-0 shadow-none text-lg text-text bg-secondary">Start</button>)
       case State.PLAY:
-        return (<button onClick={() => fetchPair()} className="btn bg-white border-0 shadow-none text-lg">Next</button>)
+        return (<div className="h-12 w-full"></div>)
+      case State.ANSWERED:
+        return (<button onClick={() => fetchPair()} className="btn border-0 shadow-none text-lg animate-in fade-in text-text bg-secondary hover:bg-tertiary">Next</button>)
       case State.END:
-        return <></>
+        return (<div className="h-12 w-full"></div>)
     }
   }
 
   return (
     <div className="h-screen">
-      <div className="h-1/6 flex justify-center items-center"> {/* NavBar */}
-        <h1 className='text-3xl flex font-mono font-bold underline'>
+      <div className="h-1/6 flex justify-center items-center bg-secondary" > 
+        <h1 className="text-3xl flex font-mono font-bold underline animate-fade text-text">
           Would You Rather - Programmer edition
         </h1>
       </div>
-      <div className="h-5/6 bg-base-100 flex flex-col justify-center items-center">{/* Main content*/}
+      <div className="h-5/6 flex flex-col justify-center items-center bg-primary text-text">
         <div className="w-full h-5/6 flex justify-center items-center">
         {mainContent()}
         </div>

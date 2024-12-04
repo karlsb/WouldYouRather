@@ -29,8 +29,8 @@ type Choice struct {
 }
 
 // -----UUID: string - pairIDs: []int
-var SeenPairs = make(map[string][]int)
-var NUMBER_OF_PAIRS int = 0
+var SeenPairs = make(map[string][]int) //TODO should i not just attach this value to Database struct?
+var NUMBER_OF_PAIRS int = 0            //TODO should i not just attach this value to Database struct?
 
 /*
 *  DATABASE
@@ -283,6 +283,8 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	//TODO Change route names store-answer -> choice/answer
+	//remove get-number-of-pairs or change to number-of-pairs
 	mux.HandleFunc("/", routeCheckMiddleware("/", indexHandler))
 	mux.HandleFunc("/random-pair", routeCheckMiddleware("/random-pair", getRandomPairHandler))
 	mux.HandleFunc("/store-answer", routeCheckMiddleware("/store-answer", storeAnswer))
