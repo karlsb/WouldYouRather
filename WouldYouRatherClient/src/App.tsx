@@ -257,7 +257,6 @@ function App() {
   return (
     <div className="h-screen">
       <NavBar handleChangeTheme={handleChangeTheme}></NavBar>
-      <button onClick={fetchNPairsTESTING}>TESTING</button>
       <div className="h-5/6 flex flex-col justify-center items-center bg-primary text-accent">
         <div className="w-full h-5/6 flex justify-center items-center">
         {mainContent()}
