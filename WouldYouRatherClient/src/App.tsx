@@ -157,6 +157,8 @@ function App() {
     if(savedTheme) {
       setTheme(savedTheme)
       document.documentElement.setAttribute('data-theme', savedTheme)
+      console.log(theme)
+      console.log(themes)
     }
   },[])
 
