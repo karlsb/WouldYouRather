@@ -28,19 +28,6 @@ function DisplayMessage(props: DisplayMessageProps){
 }
 
 
-type TextProps = {
-  text: string
-}
-function Text(props:TextProps) {
-  const [displayText, setDisplayText] = useState("")
-  useEffect(() => {
-    setDisplayText(props.text)
-  },[props.text])
-  return (
-    <span key={displayText} className="animate-fade">{displayText}</span>
-  )
-}
-
 type CardProps = {
   text : string
   id: number
@@ -54,8 +41,8 @@ function Card(props: CardProps){
   const [text, setText] = useState("")
 
   let classes = props.side === "left" ?
-        "flex flex-1 flex-col rounded-full mr-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
-      : "flex flex-1 flex-col rounded-full ml-2 m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
+        "flex flex-1 flex-col justify-center rounded-full mr-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
+      : "flex flex-1 flex-col justify-center rounded-full ml-2 m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
 
   useEffect(() => {
     setText(props.text)
@@ -106,7 +93,6 @@ function CardWrapper(props: CardWrapperProps) {
         setChoiceMade(true)
       }
       else{
-        //console.log("API call failed", res.status)
       }
     }
   }
