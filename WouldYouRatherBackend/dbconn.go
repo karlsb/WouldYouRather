@@ -40,7 +40,7 @@ func (db *Database) getNumberOfPairs() int {
 	return num
 }
 
-func createGetRandomPairQueryString(userID string) (string, []interface{}) {
+func createQueryStringGetRandomPair(userID string) (string, []interface{}) {
 	placeholders := make([]string, len(SeenPairs[userID]))
 	args := make([]interface{}, len(SeenPairs[userID]))
 	for i, id := range SeenPairs[userID] {
@@ -56,7 +56,7 @@ func createGetRandomPairQueryString(userID string) (string, []interface{}) {
 }
 
 func (db Database) getRandomPair(userID string) TextPair {
-	queryString, args := createGetRandomPairQueryString(userID)
+	queryString, args := createQueryStringGetRandomPair(userID)
 	rows, err := db.sqldb.Query(queryString, args...)
 	if err != nil {
 		fmt.Println("error in db.Query")
