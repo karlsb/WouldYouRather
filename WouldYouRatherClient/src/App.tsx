@@ -51,7 +51,7 @@ function Card(props: CardProps){
   return (
     <>
       <div onClick = {props.handleClick} className={classes}>
-        <h2 key={text} className="text-center font-mono font-bold text-2xl animate-fade text-light" >{text}</h2>
+        <h2 key={text} className="text-center text-balance font-mono font-bold text-2xl animate-fade text-light" >{text}</h2>
       </div>
     </>
   )  
