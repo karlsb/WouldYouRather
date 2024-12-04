@@ -119,6 +119,7 @@ function App() {
 
   //fetch new pair from server
   async function fetchPair(){
+    setPair({id:-1, left:"",right:""})
     setGameState(State.PLAY)
     const res = await fetch(random_pair_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
     if(res.ok) {
