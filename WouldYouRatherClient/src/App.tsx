@@ -11,6 +11,7 @@ type Pair = {
 
 const random_pair_url = import.meta.env.VITE_RANDOM_PAIR_URL
 const store_answer_url = import.meta.env.VITE_STORE_ANSWER_URL
+const n_random_pairs_url = import.meta.env.VITE_N_RANDOM_PAIRS_URL
 
 type DisplayMessageProps = {
   handleClick?: React.MouseEventHandler<HTMLButtonElement>
@@ -133,11 +134,12 @@ function NavBar(props: NavBarProps) {
         )
 }
 
-
 function App() {
   const themes = ["one","two", "three", "four","five","six","seven"]
   const [theme, setTheme] = useState("one")
   const [pair,setPair] = useState<Pair>({id:-1, left:"",right:""})
+
+  const [unseenPairs, setUnseenPairs] = useState<Pair[]>([])
 
   enum State {
     START = 1,
@@ -150,10 +152,13 @@ function App() {
 
 
   useEffect(() => {
+    fetchNPairsTESTING()
     const savedTheme = localStorage.getItem("theme")
     if(savedTheme) {
       setTheme(savedTheme)
       document.documentElement.setAttribute('data-theme', savedTheme)
+      console.log(theme)
+      console.log(themes)
     }
   },[])
 
@@ -180,6 +185,20 @@ function App() {
       console.log("API call failed", res.status)
     }
   }
+  ///TESTING HERE
+  async function fetchNPairsTESTING(){
+    setPair({id:-1, left:"",right:""})
+    const res = await fetch(n_random_pairs_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
+    if(res.ok) {
+      const data = await res.json()
+      console.log(data)
+      const pairs:Pair[] = data.pair.map((item: any) =>({id:item.id, left:item.left, right:item.right}))
+      setUnseenPairs((unseenPairs) => [...unseenPairs, ...pairs])
+    }
+    else{
+      console.log("API call failed", res.status)
+    }
+  }
 
   function handlePlayAgain(){
     setGameState(State.START)
@@ -193,7 +212,17 @@ function App() {
 
   function handleOnPlay() {
     setGameState(State.PLAY)
-    fetchPair()
+    const tempPairs = [...unseenPairs]
+    const pair = tempPairs.pop()
+    if(pair !== undefined){
+      setPair(pair)
+    }
+    if(unseenPairs.length < 2){
+      fetchNPairsTESTING()
+    }
+    else{
+      setUnseenPairs(tempPairs)
+    }
   }
 
   //TODO make a render switch statement with 3 states - start, playing, endstate - render this function the div
@@ -228,6 +257,7 @@ function App() {
   return (
     <div className="h-screen">
       <NavBar handleChangeTheme={handleChangeTheme}></NavBar>
+      <button onClick={fetchNPairsTESTING}>TESTING</button>
       <div className="h-5/6 flex flex-col justify-center items-center bg-primary text-accent">
         <div className="w-full h-5/6 flex justify-center items-center">
         {mainContent()}
