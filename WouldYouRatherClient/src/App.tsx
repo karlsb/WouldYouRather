@@ -41,8 +41,8 @@ function Card(props: CardProps){
   const [text, setText] = useState("")
 
   let classes = props.side === "left" ?
-        "flex flex-1 flex-col justify-center rounded-full mr-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
-      : "flex flex-1 flex-col justify-center rounded-full ml-2 m-0 auto w-1/2 p-6 bg-secondary hover:bg-tertiary transition-colors duration-400"
+        "flex flex-1 flex-col justify-center rounded-full mr-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-neutral transition-colors duration-400"
+      : "flex flex-1 flex-col justify-center rounded-full ml-2 m-0 auto w-1/2 p-6 bg-secondary hover:bg-neutral transition-colors duration-400"
 
   useEffect(() => {
     setText(props.text)
@@ -105,7 +105,37 @@ function CardWrapper(props: CardWrapperProps) {
   )
 }
 
+type NavBarProps = {
+  handleChangeTheme: (newTheme: string) => void
+}
+function NavBar(props: NavBarProps) {
+  return (
+      <div className="h-1/6 flex justify-center items-center relative bg-secondary px-4" >
+        <h1 className="text-3xl font-mono font-bold underline animate-fade text-accent mx-auto">
+          Would You Rather - Programmer edition
+        </h1>
+      <div className="absolute right-40">
+        <details className="dropdown">
+          <summary className="btn m-1">Color Theme</summary>
+          <ul className="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
+            <li><button onClick={() => props.handleChangeTheme('one')}>Color Theme 1</button></li>
+            <li><button onClick={() => props.handleChangeTheme('two')}>Color Theme 2</button></li>
+            <li><button onClick={() => props.handleChangeTheme('three')}>Color Theme 3</button></li>
+            <li><button onClick={() => props.handleChangeTheme('four')}>Color Theme 4</button></li>
+            <li><button onClick={() => props.handleChangeTheme('five')}>Color Theme 5</button></li>
+            <li><button onClick={() => props.handleChangeTheme('six')}>Color Theme 6</button></li>
+            <li><button onClick={() => props.handleChangeTheme('seven')}>Color Theme 7</button></li>
+          </ul>
+        </details>
+        </div>
+      </div> 
+        )
+}
+
+
 function App() {
+  const themes = ["one","two", "three", "four","five","six","seven"]
+  const [theme, setTheme] = useState("one")
   const [pair,setPair] = useState<Pair>({id:-1, left:"",right:""})
 
   enum State {
@@ -116,6 +146,22 @@ function App() {
   }
 
   const [gameState, setGameState] = useState(State.START)
+
+
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("theme")
+    if(savedTheme) {
+      setTheme(savedTheme)
+      document.documentElement.setAttribute('data-theme', savedTheme)
+    }
+  },[])
+
+  function handleChangeTheme(newTheme:string) {
+    console.log("CHANGING COLOR THEME", newTheme)
+    setTheme(newTheme)
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('theme', newTheme);
+  }
 
   //fetch new pair from server
   async function fetchPair(){
@@ -144,7 +190,6 @@ function App() {
     setGameState(State.ANSWERED)
   }
 
-  //start the game
   function handleOnPlay() {
     setGameState(State.PLAY)
     fetchPair()
@@ -169,11 +214,11 @@ function App() {
   const startNexButton = () => {
     switch(gameState){
       case State.START:
-        return (<button onClick={handleOnPlay} className="btn border-0 shadow-none text-lg text-text bg-secondary">Start</button>)
+        return (<button onClick={handleOnPlay} className="btn border-0 shadow-none text-lg text-accent bg-secondary">Start</button>)
       case State.PLAY:
         return (<div className="h-12 w-full"></div>)
       case State.ANSWERED:
-        return (<button onClick={() => fetchPair()} className="btn border-0 shadow-none text-lg animate-in fade-in text-text bg-secondary hover:bg-tertiary">Next</button>)
+        return (<button onClick={() => fetchPair()} className="btn border-0 shadow-none text-lg animate-in fade-in text-accent bg-secondary hover:bg-neutral">Next</button>)
       case State.END:
         return (<div className="h-12 w-full"></div>)
     }
@@ -181,12 +226,8 @@ function App() {
 
   return (
     <div className="h-screen">
-      <div className="h-1/6 flex justify-center items-center bg-secondary" > 
-        <h1 className="text-3xl flex font-mono font-bold underline animate-fade text-text">
-          Would You Rather - Programmer edition
-        </h1>
-      </div>
-      <div className="h-5/6 flex flex-col justify-center items-center bg-primary text-text">
+      <NavBar handleChangeTheme={handleChangeTheme}></NavBar>
+      <div className="h-5/6 flex flex-col justify-center items-center bg-primary text-accent">
         <div className="w-full h-5/6 flex justify-center items-center">
         {mainContent()}
         </div>
