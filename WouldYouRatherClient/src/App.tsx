@@ -113,7 +113,7 @@ function NavBar(props: NavBarProps) {
   return (
       <div className="h-1/6 flex justify-center items-center relative bg-secondary px-4" >
         <h1 className="text-3xl font-extrabold animate-fade text-accent mx-auto">
-          Would You Rather - Programmer edition
+          Would You Rather - Programmer Edition
         </h1>
       <div className="absolute right-40">
         <details className="dropdown">
