@@ -100,7 +100,7 @@ function CardWrapper(props: CardWrapperProps) {
 }
 
 function App() {
-  const [pair,setPair] = useState<Pair>({id:-1, left:"Welcome to",right:"Would you rather"})
+  const [pair,setPair] = useState<Pair>({id:-1, left:"",right:""})
 
   enum State {
     START = 1,
