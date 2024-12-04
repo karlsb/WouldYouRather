@@ -48,7 +48,7 @@ func handleGetNumberOfPairsN(w http.ResponseWriter, r *http.Request) {
 
 	response := MultiPairResponse{
 		Status:       "success",
-		Pairs:        db.getRandomPairN(cookie.Value, 10),
+		Pairs:        db.getRandomPairN(cookie.Value, 4),
 		AllPairsSeen: false,
 	}
 
