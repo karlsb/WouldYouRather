@@ -49,6 +49,7 @@ func main() {
 	mux.HandleFunc("/random-pair", routeCheckMiddleware("/random-pair", getRandomPairHandler))
 	mux.HandleFunc("/store-answer", routeCheckMiddleware("/store-answer", storeAnswer))
 	mux.HandleFunc("/get-number-of-pairs", routeCheckMiddleware("/get-number-of-pairs", handleGetNumberOfPairs))
+	mux.HandleFunc("/n-random-pairs", routeCheckMiddleware("/n-random-pairs", handleGetNumberOfPairsN))
 
 	port := os.Getenv("PORT")
 	if port == "" {

@@ -24,7 +24,49 @@ type Response struct {
 	AllPairsSeen bool     `json:"allPairsSeen"`
 }
 
+type MultiPairResponse struct {
+	Status       string     `json:"status"`
+	Pairs        []TextPair `json:"pair"`
+	AllPairsSeen bool       `json:"allPairsSeen"`
+}
+
 var db Database
+
+func handleGetNumberOfPairsN(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie("user_id")
+	if err != nil {
+		newUserID := uuid.New().String()
+		cookie = &http.Cookie{
+			Name:     "user_id",
+			Value:    newUserID,
+			Path:     "/",
+			Secure:   true,
+			SameSite: http.SameSiteNoneMode,
+			Expires:  time.Now().Add(24 * time.Hour),
+		}
+	}
+
+	response := MultiPairResponse{
+		Status:       "success",
+		Pairs:        db.getRandomPairN(cookie.Value, 10),
+		AllPairsSeen: false,
+	}
+
+	if len(SeenPairs[cookie.Value]) == NUMBER_OF_PAIRS {
+		SeenPairs = make(map[string][]int) //TODO bind this to a custom datastrucure for clarity
+		response.AllPairsSeen = true
+	}
+
+	for _, pair := range response.Pairs {
+		SeenPairs[cookie.Value] = append(SeenPairs[cookie.Value], pair.Id)
+	}
+	w.Header().Set("Content-Type", "application/json")
+	http.SetCookie(w, cookie)
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		http.Error(w, "Failed to encdode JSON", http.StatusInternalServerError)
+	}
+
+}
 
 func getRandomPairHandler(w http.ResponseWriter, r *http.Request) {
 	//respond with json
