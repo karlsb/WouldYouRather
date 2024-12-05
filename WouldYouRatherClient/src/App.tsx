@@ -1,142 +1,15 @@
 import { useEffect, useState } from "react"
-
-
-// colors from : https://colorhunt.co/palette/89a8b2b3c8cfe5e1daf1f0e8
-
-type Pair = {
-  id: number
-  left: string
-  right: string
-}
+import { NavBar } from "./components/NavBar"
+import { DisplayMessage } from "./components/DisplayMessage"
+import { CardWrapper } from "./components/CardWrapper"
+import Pair from "./types/Pair"
 
 const random_pair_url = import.meta.env.VITE_RANDOM_PAIR_URL
-const store_answer_url = import.meta.env.VITE_STORE_ANSWER_URL
 const n_random_pairs_url = import.meta.env.VITE_N_RANDOM_PAIRS_URL
 
-type DisplayMessageProps = {
-  handleClick?: React.MouseEventHandler<HTMLButtonElement>
-  headingText?: string
-  buttonText?: string
-}
-
-function DisplayMessage(props: DisplayMessageProps){
-  return (
-    <div className="flex font-mono text-2xl font-bold">
-      <h1>{props.headingText}</h1>
-      <button onClick={props.handleClick} className="underline ml-2">{props.buttonText}</button>
-    </div>
-  )
-}
-
-
-type CardProps = {
-  text : string
-  id: number
-  side: string
-  percent: number
-  showPercent: boolean
-  handleClick: (e:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
-}
-
-function Card(props: CardProps){
-  const [text, setText] = useState("")
-
-  let classes = props.side === "left" ?
-        "flex flex-1 flex-col justify-center rounded-full mr-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-neutral transition-colors duration-400"
-      : "flex flex-1 flex-col justify-center rounded-full ml-2 m-0 auto w-1/2 p-6 bg-secondary hover:bg-neutral transition-colors duration-400"
-
-  useEffect(() => {
-    setText(props.text)
-  },[props])
- 
-  return (
-    <>
-      <div onClick = {props.handleClick} className={classes}>
-        <h2 key={text} className="text-center text-balance font-mono font-bold text-2xl animate-fade text-light" >{text}</h2>
-      </div>
-    </>
-  )  
-}
-
-type CardWrapperProps = {
-  pair: Pair
-  handleAnswer?: (e:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
-}
-
-function CardWrapper(props: CardWrapperProps) {
-  const [rightText, setRightText] = useState("")
-  const [leftText, setLeftText] = useState("")
-  const [leftPercent, setLeftPercent] = useState(0)
-  const [rightPercent, setRightPercent] = useState(0)
-  const [choiceMade, setChoiceMade] = useState(false)
-
-  useEffect(() => {
-    setLeftText(props.pair.left)
-    setRightText(props.pair.right)
-    setChoiceMade(false)
-  },[props])
-
-  const handleClick = async (leftright: string, e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
-    e.preventDefault()
-    if(props.handleAnswer){
-      props.handleAnswer(e)
-    }
-    if(!choiceMade) {
-      const res = await fetch(store_answer_url, {method:"POST", credentials:"include", headers: {"Content-Type":"application/json"}, body: JSON.stringify({"id":props.pair.id , "leftright": leftright })}) //need to attach payload
-      if(res.ok) {
-        const data = await res.json()
-        const lpercentage = data.pair.lcount * 100 / (data.pair.lcount + data.pair.rcount) 
-        const rpercentage = data.pair.rcount * 100 / (data.pair.lcount + data.pair.rcount)  
-        setLeftText(lpercentage.toFixed(0).toString() + "% Picked this option")
-        setLeftPercent(lpercentage)
-        setRightText(rpercentage.toFixed(0).toString()+ "% Picked this option")
-        setRightPercent(rpercentage)
-        setChoiceMade(true)
-      }
-      else{
-      }
-    }
-  }
-
-  return (
-          <div className="w-3/5 flex flex-wrap animate-in slide-in-from-left bg-primary">
-            <Card handleClick={(e) => handleClick("left", e)} side="left" percent={leftPercent} showPercent={choiceMade} text={leftText} id={props.pair.id}></Card>
-            <Card handleClick={(e) => handleClick("right", e)} side="right" percent={rightPercent} showPercent={choiceMade} text={rightText} id={props.pair.id}></Card>
-          </div>
-  )
-}
-
-type NavBarProps = {
-  handleChangeTheme: (newTheme: string) => void
-}
-function NavBar(props: NavBarProps) {
-
-  return (
-      <div className="h-1/6 flex justify-center items-center relative bg-secondary px-4" >
-        <h1 className="text-3xl font-extrabold animate-fade text-accent mx-auto">
-          Would You Rather - Programmer Edition
-        </h1>
-      <div className="absolute right-40">
-        <details className="dropdown">
-          <summary className="btn m-1">Color Theme</summary>
-          <ul className="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-            <li><button onClick={() => props.handleChangeTheme('one')}>Color Theme 1</button></li>
-            <li><button onClick={() => props.handleChangeTheme('two')}>Color Theme 2</button></li>
-            <li><button onClick={() => props.handleChangeTheme('three')}>Color Theme 3</button></li>
-            <li><button onClick={() => props.handleChangeTheme('four')}>Color Theme 4</button></li>
-            <li><button onClick={() => props.handleChangeTheme('five')}>Color Theme 5</button></li>
-            <li><button onClick={() => props.handleChangeTheme('six')}>Color Theme 6</button></li>
-            <li><button onClick={() => props.handleChangeTheme('seven')}>Color Theme 7</button></li>
-          </ul>
-        </details>
-        </div>
-      </div> 
-        )
-}
 
 function App() {
   const [pair,setPair] = useState<Pair>({id:-1, left:"",right:""})
-
   const [unseenPairs, setUnseenPairs] = useState<Pair[]>([])
 
   enum State {
@@ -147,7 +20,6 @@ function App() {
   }
 
   const [gameState, setGameState] = useState(State.START)
-
 
   useEffect(() => {
     fetchNPairsTESTING()
@@ -217,9 +89,6 @@ function App() {
       setUnseenPairs(tempPairs)
     }
   }
-
-  //TODO make a render switch statement with 3 states - start, playing, endstate - render this function the div
-  //TODO where the allPairsSeen is being rendered now
 
   const mainContent = () => {
     switch(gameState){ 
