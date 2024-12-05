@@ -4,17 +4,34 @@ type CardProps = {
   text : string
   id: number
   side: string
-  percent: number
-  showPercent: boolean
+  choiceMade:boolean
   handleClick: (e:React.MouseEvent<HTMLDivElement, MouseEvent>) => void
 }
 
 export function Card(props: CardProps){
   const [text, setText] = useState("")
+  const [additional, setAdditional] = useState("")
+  
+  let classes = "flex justify-center items-center h-1/2 rounded-full mr-2 m-0 auto p-6 bg-secondary transition-colors duration-400"
+  classes = props.side === "left" ?
+        classes + " mr-2"
+      : classes + " ml-2"
 
-  let classes = props.side === "left" ?
-        "flex flex-1 flex-col justify-center rounded-full mr-2 items-center m-0 auto w-1/2 p-6 bg-secondary hover:bg-neutral transition-colors duration-400"
-      : "flex flex-1 flex-col justify-center rounded-full ml-2 m-0 auto w-1/2 p-6 bg-secondary hover:bg-neutral transition-colors duration-400"
+  classes = props.choiceMade ? classes : classes + " hover:bg-neutral"
+
+  const onPress = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
+    e.preventDefault()
+    if(!props.choiceMade){
+        setAdditional(" bg-neutral text-primary")
+        props.handleClick(e)
+    }
+  }
+
+  useEffect(() => {
+    if(!props.choiceMade){
+        setAdditional("")
+    }
+  },[props.choiceMade])
 
   useEffect(() => {
     setText(props.text)
@@ -22,7 +39,7 @@ export function Card(props: CardProps){
  
   return (
     <>
-      <div onClick = {props.handleClick} className={classes}>
+      <div onClick = {onPress} className={classes + additional}>
         <h2 key={text} className="text-center text-balance font-mono font-bold text-2xl animate-fade text-light" >{text}</h2>
       </div>
     </>
