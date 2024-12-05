@@ -22,7 +22,7 @@ export function Card(props: CardProps){
   const onPress = (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => {
     e.preventDefault()
     if(!props.choiceMade){
-        setAdditional(" bg-neutral text-primary")
+        setAdditional("dummy-class bg-neutral text-primary")
         props.handleClick(e)
     }
   }
