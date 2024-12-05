@@ -135,8 +135,6 @@ function NavBar(props: NavBarProps) {
 }
 
 function App() {
-  const themes = ["one","two", "three", "four","five","six","seven"]
-  const [theme, setTheme] = useState("one")
   const [pair,setPair] = useState<Pair>({id:-1, left:"",right:""})
 
   const [unseenPairs, setUnseenPairs] = useState<Pair[]>([])
@@ -155,16 +153,11 @@ function App() {
     fetchNPairsTESTING()
     const savedTheme = localStorage.getItem("theme")
     if(savedTheme) {
-      setTheme(savedTheme)
       document.documentElement.setAttribute('data-theme', savedTheme)
-      console.log(theme)
-      console.log(themes)
     }
   },[])
 
   function handleChangeTheme(newTheme:string) {
-    console.log("CHANGING COLOR THEME", newTheme)
-    setTheme(newTheme)
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
   }
