@@ -11,8 +11,8 @@ type CardWrapperProps = {
 export function CardWrapper(props: CardWrapperProps) {
   const [rightText, setRightText] = useState("")
   const [leftText, setLeftText] = useState("")
-  const [leftPercent, setLeftPercent] = useState(0)
-  const [rightPercent, setRightPercent] = useState(0)
+  const [leftPercent, setLeftPercent] = useState("")
+  const [rightPercent, setRightPercent] = useState("")
   const [choiceMade, setChoiceMade] = useState(false)
     
   const store_answer_url = import.meta.env.VITE_STORE_ANSWER_URL
@@ -34,19 +34,23 @@ export function CardWrapper(props: CardWrapperProps) {
         const data = await res.json()
         const lpercentage = data.pair.lcount * 100 / (data.pair.lcount + data.pair.rcount) 
         const rpercentage = data.pair.rcount * 100 / (data.pair.lcount + data.pair.rcount)  
-        setLeftText(lpercentage.toFixed(0).toString() + "% Picked this option")
-        setLeftPercent(lpercentage)
-        setRightText(rpercentage.toFixed(0).toString()+ "% Picked this option")
-        setRightPercent(rpercentage)
+        setLeftPercent(lpercentage.toFixed(0).toString() + "% Picked this option")
+        setRightPercent(rpercentage.toFixed(0).toString()+ "% Picked this option")
         setChoiceMade(true)
       }
     }
   }
 
   return (
-          <div className="w-3/5 flex flex-wrap animate-in slide-in-from-left bg-primary">
-            <Card handleClick={(e) => handleClick("left", e)} side="left" percent={leftPercent} showPercent={choiceMade} text={leftText} id={props.pair.id}></Card>
-            <Card handleClick={(e) => handleClick("right", e)} side="right" percent={rightPercent} showPercent={choiceMade} text={rightText} id={props.pair.id}></Card>
+          <div className="w-4/5  h-full flex flex-wrap items-center justify-center animate-in slide-in-from-left bg-primary">
+            <div className="flex flex-1 flex-col max-w-xl h-full">
+                <Card handleClick={(e) => handleClick("left", e)} side="left" choiceMade={choiceMade} text={leftText} id={props.pair.id}></Card>
+                {choiceMade ? <p className="text-center font-mono font-bold text-2xl mt-5">{leftPercent}</p> : <></>}
+            </div>
+            <div className="flex flex-1 flex-col max-w-xl h-full">
+                <Card handleClick={(e) => handleClick("right", e)} side="right" choiceMade={choiceMade} text={rightText} id={props.pair.id}></Card>
+                {choiceMade ? <p className="text-center font-mono font-bold text-2xl mt-5">{rightPercent}</p> : <></>}
+            </div>
           </div>
   )
 }

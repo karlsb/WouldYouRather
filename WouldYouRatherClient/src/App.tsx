@@ -106,11 +106,11 @@ function App() {
   const startNexButton = () => {
     switch(gameState){
       case State.START:
-        return (<button onClick={handleOnPlay} className="btn border-0 shadow-none text-lg text-accent bg-secondary">Start</button>)
+        return (<button onClick={handleOnPlay} className="btn btn-lg btn-wide border-0 shadow-md text-lg text-accent bg-secondary">Start</button>)
       case State.PLAY:
         return (<div className="h-12 w-full"></div>)
       case State.ANSWERED:
-        return (<button onClick={() => fetchPair()} className="btn border-0 shadow-none text-lg animate-in fade-in text-accent bg-secondary hover:bg-neutral">Next</button>)
+        return (<button onClick={() => fetchPair()} className="btn btn-lg btn-wide border-0 shadow-md text-lg animate-in fade-in text-accent bg-secondary hover:bg-neutral">Next</button>)
       case State.END:
         return (<div className="h-12 w-full"></div>)
     }
@@ -120,10 +120,12 @@ function App() {
     <div className="h-screen">
       <NavBar handleChangeTheme={handleChangeTheme}></NavBar>
       <div className="h-5/6 flex flex-col justify-center items-center bg-primary text-accent">
-        <div className="w-full h-5/6 flex justify-center items-center">
+        <div className="w-full h-1/3 flex justify-center items-center">
         {mainContent()}
         </div>
+        <div className="w-full h-1/6 flex justify-center">
         {startNexButton()}
+        </div>
       </div>
     </div>
   )
