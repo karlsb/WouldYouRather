@@ -66,11 +66,11 @@ export function CardWrapper(props: CardWrapperProps) {
           <div className="w-4/5  h-full flex flex-wrap items-center justify-center animate-in slide-in-from-left bg-primary">
             <div className="flex flex-1 flex-col max-w-xl h-full">
                 <Card handleClick={(e) => handleClick("left", e)} state={leftCardState} side="left" choiceMade={choiceMade} text={leftText} id={props.pair.id}></Card>
-                {choiceMade ? <p className="text-center font-mono font-bold text-2xl mt-5">{leftPercent}</p> : <></>}
+                {choiceMade ? <p className="text-center animate-fade font-mono font-bold text-2xl mt-5">{leftPercent}</p> : <></>}
             </div>
             <div className="flex flex-1 flex-col max-w-xl h-full">
                 <Card handleClick={(e) => handleClick("right", e)} state={rightCardState} side="right" choiceMade={choiceMade} text={rightText} id={props.pair.id}></Card>
-                {choiceMade ? <p className="text-center font-mono font-bold text-2xl mt-5">{rightPercent}</p> : <></>}
+                {choiceMade ? <p className="text-center animate-fade font-mono font-bold text-2xl mt-5">{rightPercent}</p> : <></>}
             </div>
           </div>
   )
