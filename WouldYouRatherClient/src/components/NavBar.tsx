@@ -11,7 +11,7 @@ export function NavBar(props: NavBarProps) {
         </h1>
       <div className="absolute right-40">
         <details className="dropdown">
-          <summary className="btn m-1 bg-primary">Color Theme</summary>
+          <summary className="btn m-1 bg-primary border-none shadow-md">Color Theme</summary>
           <ul className="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
             <li><button className="hover:bg-primary" onClick={() => props.handleChangeTheme('one')}>Color Theme 1</button></li>
             <li><button className="hover:bg-primary" onClick={() => props.handleChangeTheme('two')}>Color Theme 2</button></li>
