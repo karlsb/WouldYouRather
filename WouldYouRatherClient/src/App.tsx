@@ -5,7 +5,6 @@ import { CardWrapper } from "./components/CardWrapper"
 import { GameState } from "./types/State"
 import Pair from "./types/Pair"
 
-const random_pair_url = import.meta.env.VITE_RANDOM_PAIR_URL
 const n_random_pairs_url = import.meta.env.VITE_N_RANDOM_PAIRS_URL
 
 function App() {
