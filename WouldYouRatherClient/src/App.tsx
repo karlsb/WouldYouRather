@@ -15,7 +15,7 @@ function App() {
   const [gameState, setGameState] = useState(GameState.START)
 
   useEffect(() => {
-    fetchNPairsTESTING()
+    fetchManyPairs()
     const savedTheme = localStorage.getItem("theme")
     if(savedTheme) {
       document.documentElement.setAttribute('data-theme', savedTheme)
@@ -27,31 +27,18 @@ function App() {
     localStorage.setItem('theme', newTheme);
   }
 
-  //fetch new pair from server
-  async function fetchPair(){
-    setPair({id:-1, left:"",right:""})
-    setGameState(GameState.PLAY)
-    const res = await fetch(random_pair_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
-    if(res.ok) {
-      const data = await res.json()
-      if(data.allPairsSeen){
-        setGameState(GameState.END)
-      }
-      setPair({id:data.pair.id, left:data.pair.left, right:data.pair.right})
-    }
-    else{
-      console.log("API call failed", res.status)
-    }
-  }
-  ///TESTING HERE
-  async function fetchNPairsTESTING(){
-    setPair({id:-1, left:"",right:""})
+  async function fetchManyPairs(){
+    //setPair({id:-1, left:"",right:""})
     const res = await fetch(n_random_pairs_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
     if(res.ok) {
       const data = await res.json()
       console.log(data)
-      const pairs:Pair[] = data.pair.map((item: any) =>({id:item.id, left:item.left, right:item.right}))
-      setUnseenPairs((unseenPairs) => [...unseenPairs, ...pairs])
+      if(data.allPairsSeen){
+        setGameState(GameState.END)
+      }else {
+        const pairs:Pair[] = data.pair.map((item: any) =>({id:item.id, left:item.left, right:item.right}))
+        setUnseenPairs((unseenPairs) => [...unseenPairs, ...pairs])
+      }
     }
     else{
       console.log("API call failed", res.status)
@@ -68,6 +55,8 @@ function App() {
     setGameState(GameState.ANSWERED)
   }
 
+
+  //this is probably never hit as i expect i should try removing etc.
   function handleOnPlay() {
     setGameState(GameState.PLAY)
     const tempPairs = [...unseenPairs]
@@ -76,10 +65,26 @@ function App() {
       setPair(pair)
     }
     if(unseenPairs.length < 2){
-      fetchNPairsTESTING()
+      //i set gamestate to end inside fetchManyPairs, i should probably make it return a value so that i can set it here myself.
+      fetchManyPairs()
     }
     else{
       setUnseenPairs(tempPairs)
+    }
+  }
+
+  function handleNext(){
+    //setPair({id:-1, left:"",right:""})
+    console.log(unseenPairs)
+    setGameState(GameState.PLAY)
+    const tempPairs = [...unseenPairs]
+    const pair = tempPairs.pop()
+    if(pair !== undefined){
+      setPair(pair)
+      setUnseenPairs(tempPairs)
+    }
+    if(unseenPairs.length < 3){
+      fetchManyPairs()
     }
   }
 
@@ -103,7 +108,7 @@ function App() {
       case GameState.PLAY:
         return (<div className="h-12 w-full"></div>)
       case GameState.ANSWERED:
-        return (<button onClick={() => fetchPair()} className="btn btn-lg btn-wide border-0 shadow-md text-lg animate-in fade-in text-accent bg-secondary hover:bg-neutral">Next</button>)
+        return (<button onClick={handleNext} className="btn btn-lg btn-wide border-0 shadow-md text-lg animate-in fade-in text-accent bg-secondary hover:bg-neutral">Next</button>)
       case GameState.END:
         return (<div className="h-12 w-full"></div>)
     }
