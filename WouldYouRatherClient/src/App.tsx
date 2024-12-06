@@ -2,24 +2,17 @@ import { useEffect, useState } from "react"
 import { NavBar } from "./components/NavBar"
 import { DisplayMessage } from "./components/DisplayMessage"
 import { CardWrapper } from "./components/CardWrapper"
+import { GameState } from "./types/State"
 import Pair from "./types/Pair"
 
 const random_pair_url = import.meta.env.VITE_RANDOM_PAIR_URL
 const n_random_pairs_url = import.meta.env.VITE_N_RANDOM_PAIRS_URL
 
-
 function App() {
   const [pair,setPair] = useState<Pair>({id:-1, left:"",right:""})
   const [unseenPairs, setUnseenPairs] = useState<Pair[]>([])
 
-  enum State {
-    START = 1,
-    PLAY = 2,
-    ANSWERED =3,
-    END = 4,
-  }
-
-  const [gameState, setGameState] = useState(State.START)
+  const [gameState, setGameState] = useState(GameState.START)
 
   useEffect(() => {
     fetchNPairsTESTING()
@@ -37,12 +30,12 @@ function App() {
   //fetch new pair from server
   async function fetchPair(){
     setPair({id:-1, left:"",right:""})
-    setGameState(State.PLAY)
+    setGameState(GameState.PLAY)
     const res = await fetch(random_pair_url, {method:"GET", credentials:"include",headers: {"Content-Type":"application/json"}})
     if(res.ok) {
       const data = await res.json()
       if(data.allPairsSeen){
-        setGameState(State.END)
+        setGameState(GameState.END)
       }
       setPair({id:data.pair.id, left:data.pair.left, right:data.pair.right})
     }
@@ -66,17 +59,17 @@ function App() {
   }
 
   function handlePlayAgain(){
-    setGameState(State.START)
+    setGameState(GameState.START)
     setPair({id:-1, left:"",right:""})
   }
 
   function handleAnswer(e: React.MouseEvent<HTMLDivElement, MouseEvent>){
     e.preventDefault()
-    setGameState(State.ANSWERED)
+    setGameState(GameState.ANSWERED)
   }
 
   function handleOnPlay() {
-    setGameState(State.PLAY)
+    setGameState(GameState.PLAY)
     const tempPairs = [...unseenPairs]
     const pair = tempPairs.pop()
     if(pair !== undefined){
@@ -92,26 +85,26 @@ function App() {
 
   const mainContent = () => {
     switch(gameState){ 
-      case State.START:
+      case GameState.START:
         return (<DisplayMessage headingText="Welcome to Would you rather, press start to play"></DisplayMessage>)
-      case State.PLAY:
-        return (<CardWrapper handleAnswer={handleAnswer} pair={pair}></CardWrapper>)
-      case State.ANSWERED:
-        return (<CardWrapper pair={pair}></CardWrapper>)
-      case State.END:
+      case GameState.PLAY:
+        return (<CardWrapper state={GameState.PLAY} handleAnswer={handleAnswer} pair={pair}></CardWrapper>)
+      case GameState.ANSWERED:
+        return (<CardWrapper state={GameState.ANSWERED} pair={pair}></CardWrapper>)
+      case GameState.END:
         return (<DisplayMessage handleClick={handlePlayAgain} buttonText="Play again!" headingText="You have finished all questions! come back another time or"></DisplayMessage>)
       }
   } 
 
-  const startNexButton = () => {
+  const startNextButton = () => {
     switch(gameState){
-      case State.START:
+      case GameState.START:
         return (<button onClick={handleOnPlay} className="btn btn-lg btn-wide border-0 shadow-md text-lg text-accent bg-secondary">Start</button>)
-      case State.PLAY:
+      case GameState.PLAY:
         return (<div className="h-12 w-full"></div>)
-      case State.ANSWERED:
+      case GameState.ANSWERED:
         return (<button onClick={() => fetchPair()} className="btn btn-lg btn-wide border-0 shadow-md text-lg animate-in fade-in text-accent bg-secondary hover:bg-neutral">Next</button>)
-      case State.END:
+      case GameState.END:
         return (<div className="h-12 w-full"></div>)
     }
   }
@@ -124,7 +117,7 @@ function App() {
         {mainContent()}
         </div>
         <div className="w-full h-1/6 flex justify-center">
-        {startNexButton()}
+        {startNextButton()}
         </div>
       </div>
     </div>
