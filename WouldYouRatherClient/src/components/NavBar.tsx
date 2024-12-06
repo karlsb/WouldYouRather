@@ -11,15 +11,15 @@ export function NavBar(props: NavBarProps) {
         </h1>
       <div className="absolute right-40">
         <details className="dropdown">
-          <summary className="btn m-1">Color Theme</summary>
+          <summary className="btn m-1 bg-primary">Color Theme</summary>
           <ul className="menu dropdown-content bg-base-100 rounded-box z-[1] w-52 p-2 shadow">
-            <li><button onClick={() => props.handleChangeTheme('one')}>Color Theme 1</button></li>
-            <li><button onClick={() => props.handleChangeTheme('two')}>Color Theme 2</button></li>
-            <li><button onClick={() => props.handleChangeTheme('three')}>Color Theme 3</button></li>
-            <li><button onClick={() => props.handleChangeTheme('four')}>Color Theme 4</button></li>
-            <li><button onClick={() => props.handleChangeTheme('five')}>Color Theme 5</button></li>
-            <li><button onClick={() => props.handleChangeTheme('six')}>Color Theme 6</button></li>
-            <li><button onClick={() => props.handleChangeTheme('seven')}>Color Theme 7</button></li>
+            <li><button className="hover:bg-primary" onClick={() => props.handleChangeTheme('one')}>Color Theme 1</button></li>
+            <li><button className="hover:bg-primary" onClick={() => props.handleChangeTheme('two')}>Color Theme 2</button></li>
+            <li><button className="hover:bg-primary" onClick={() => props.handleChangeTheme('three')}>Color Theme 3</button></li>
+            <li><button className="hover:bg-primary" onClick={() => props.handleChangeTheme('four')}>Color Theme 4</button></li>
+            <li><button className="hover:bg-primary" onClick={() => props.handleChangeTheme('five')}>Color Theme 5</button></li>
+            <li><button className="hover:bg-primary" onClick={() => props.handleChangeTheme('six')}>Color Theme 6</button></li>
+            <li><button className="hover:bg-primary" onClick={() => props.handleChangeTheme('seven')}>Color Theme 7</button></li>
           </ul>
         </details>
         </div>
