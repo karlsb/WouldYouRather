@@ -11,21 +11,21 @@
 - Get a Random situation pair from server
 - See the percentage of people who picked the different situation
 - Replay the game
-- Select the color theme of your choise.
+- Select the color theme of your choice.
 
 
 ## Tech Stack
 
-- Fronend: React, TypeScript, TailwindCSS, Netlify
-- Backend: Go, Sqlite, Docker, DigitalOcean
+- Frontend: React, TypeScript, TailwindCSS, Netlify
+- Backend: Go, SQLite, Docker, DigitalOcean
 
 ## Installation & Running Locally
 
 ### Prerequisites
 
-[Node.js](https://nodejs.org/en) (LTS recommended)
-[Go](https://go.dev/doc/install)
-[Git](https://git-scm.com/downloads)
+- [Node.js](https://nodejs.org/en) (LTS recommended)
+- [Go](https://go.dev/doc/install)
+- [Git](https://git-scm.com/downloads)
 
 ### Setup
 
