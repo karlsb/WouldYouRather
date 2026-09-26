@@ -36,7 +36,7 @@ git clone https://github.com/karlsb/WouldYouRather.git
 ```
 
 ```bash
-cd WouldYouRather/WouldYouRatherFrontend
+cd WouldYouRather/WouldYouRatherClient
 ```
 
 ```bash
