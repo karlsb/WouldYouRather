@@ -17,8 +17,9 @@ type Database struct {
 	sqldb *sql.DB
 }
 
-func (db *Database) init() {
-	temp, err := sql.Open("sqlite", "./build-database/wouldyourather.db")
+func (db *Database) init(path string) {
+	// Wait for locks instead of failing with SQLITE_BUSY when requests write concurrently.
+	temp, err := sql.Open("sqlite", path+"?_pragma=busy_timeout(5000)")
 	if err != nil {
 		log.Fatal("Failed to Open Database", err)
 	}
@@ -40,11 +41,11 @@ func (db *Database) getNumberOfPairs() int {
 	return num
 }
 
-func (db Database) getRandomPair(userID string) TextPair {
-	queryString, args := createQueryStringGetRandomPair(userID)
+func (db Database) getRandomPair(seenIDs []int) (TextPair, error) {
+	queryString, args := createQueryStringGetRandomPair(seenIDs)
 	rows, err := db.sqldb.Query(queryString, args...)
 	if err != nil {
-		fmt.Println("error in db.Query")
+		return TextPair{}, err
 	}
 	defer rows.Close()
 
@@ -53,14 +54,14 @@ func (db Database) getRandomPair(userID string) TextPair {
 	for rows.Next() {
 		rows.Scan(&pair.Id, &pair.Left, &pair.Right, &pair.Lcount, &pair.Rcount)
 	}
-	return pair
+	return pair, rows.Err()
 }
 
-func (db Database) getRandomPairN(userID string, nr_pairs int) []TextPair {
-	queryString, args := createQueryStringGetRandomPairN(userID, nr_pairs)
+func (db Database) getRandomPairN(seenIDs []int, nr_pairs int) ([]TextPair, error) {
+	queryString, args := createQueryStringGetRandomPairN(seenIDs, nr_pairs)
 	rows, err := db.sqldb.Query(queryString, args...)
 	if err != nil {
-		fmt.Println("error in db.Query")
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -71,7 +72,7 @@ func (db Database) getRandomPairN(userID string, nr_pairs int) []TextPair {
 		rows.Scan(&pair.Id, &pair.Left, &pair.Right, &pair.Lcount, &pair.Rcount)
 		pairs = append(pairs, pair)
 	}
-	return pairs
+	return pairs, rows.Err()
 }
 
 func (db Database) increaseCountAndReturnPair(choice Choice) TextPair {
@@ -101,10 +102,10 @@ func (db Database) increaseCountAndReturnPair(choice Choice) TextPair {
 * HELPER FUNCTIONS
 *
  */
-func createQueryStringGetRandomPair(userID string) (string, []interface{}) {
-	placeholders := make([]string, len(SeenPairs[userID]))
-	args := make([]interface{}, len(SeenPairs[userID]))
-	for i, id := range SeenPairs[userID] {
+func createQueryStringGetRandomPair(seenIDs []int) (string, []interface{}) {
+	placeholders := make([]string, len(seenIDs))
+	args := make([]interface{}, len(seenIDs))
+	for i, id := range seenIDs {
 		placeholders[i] = "?"
 		args[i] = id
 	}
@@ -116,10 +117,10 @@ func createQueryStringGetRandomPair(userID string) (string, []interface{}) {
 	return queryString, args
 }
 
-func createQueryStringGetRandomPairN(userID string, nr_pairs int) (string, []interface{}) {
-	placeholders := make([]string, len(SeenPairs[userID]))
-	args := make([]interface{}, len(SeenPairs[userID]))
-	for i, id := range SeenPairs[userID] {
+func createQueryStringGetRandomPairN(seenIDs []int, nr_pairs int) (string, []interface{}) {
+	placeholders := make([]string, len(seenIDs))
+	args := make([]interface{}, len(seenIDs))
+	for i, id := range seenIDs {
 		placeholders[i] = "?"
 		args[i] = id
 	}

@@ -22,9 +22,8 @@ type Choice struct {
 	LeftRight string `json:"leftright"`
 }
 
-// -----UUID: string - pairIDs: []int
-var SeenPairs = make(map[string][]int) //TODO should i not just attach this value to Database struct?
-var NUMBER_OF_PAIRS int = 0            //TODO should i not just attach this value to Database struct?
+var seen = NewSeenStore()
+var NUMBER_OF_PAIRS int = 0 //TODO should i not just attach this value to Database struct?
 
 func main() {
 	if os.Getenv("ENV") != "production" {
@@ -33,7 +32,7 @@ func main() {
 			log.Fatal("Error loading .env file")
 		}
 	}
-	db.init()
+	db.init("./build-database/wouldyourather.db")
 	defer db.Close()
 	NUMBER_OF_PAIRS = db.getNumberOfPairs()
 

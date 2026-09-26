@@ -48,18 +48,24 @@ func handleGetNumberOfPairsN(w http.ResponseWriter, r *http.Request) {
 
 	response := MultiPairResponse{
 		Status:       "success",
-		Pairs:        db.getRandomPairN(cookie.Value, 4),
-		AllPairsSeen: false,
+		AllPairsSeen: seen.ResetIfComplete(cookie.Value, NUMBER_OF_PAIRS),
 	}
 
-	if len(SeenPairs[cookie.Value]) == NUMBER_OF_PAIRS {
-		SeenPairs = make(map[string][]int) //TODO bind this to a custom datastrucure for clarity
-		response.AllPairsSeen = true
+	if !response.AllPairsSeen {
+		pairs, err := db.getRandomPairN(seen.Snapshot(cookie.Value), 4)
+		if err != nil {
+			log.Println("ServerError in handleGetNumberOfPairsN: ", err)
+			http.Error(w, "Failed to get pairs", http.StatusInternalServerError)
+			return
+		}
+		response.Pairs = pairs
+		ids := make([]int, len(pairs))
+		for i, pair := range pairs {
+			ids[i] = pair.Id
+		}
+		seen.Add(cookie.Value, ids...)
 	}
 
-	for _, pair := range response.Pairs {
-		SeenPairs[cookie.Value] = append(SeenPairs[cookie.Value], pair.Id)
-	}
 	w.Header().Set("Content-Type", "application/json")
 	http.SetCookie(w, cookie)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -85,16 +91,20 @@ func getRandomPairHandler(w http.ResponseWriter, r *http.Request) {
 
 	response := Response{
 		Status:       "success",
-		Pair:         db.getRandomPair(cookie.Value),
-		AllPairsSeen: false,
+		AllPairsSeen: seen.ResetIfComplete(cookie.Value, NUMBER_OF_PAIRS),
 	}
 
-	if len(SeenPairs[cookie.Value]) == NUMBER_OF_PAIRS {
-		SeenPairs = make(map[string][]int) //TODO bind this to a custom datastrucure for clarity
-		response.AllPairsSeen = true
+	if !response.AllPairsSeen {
+		pair, err := db.getRandomPair(seen.Snapshot(cookie.Value))
+		if err != nil {
+			log.Println("ServerError in getRandomPairHandler: ", err)
+			http.Error(w, "Failed to get pair", http.StatusInternalServerError)
+			return
+		}
+		response.Pair = pair
+		seen.Add(cookie.Value, pair.Id)
 	}
 
-	SeenPairs[cookie.Value] = append(SeenPairs[cookie.Value], response.Pair.Id)
 	w.Header().Set("Content-Type", "application/json")
 	http.SetCookie(w, cookie)
 	if err := json.NewEncoder(w).Encode(response); err != nil {
@@ -115,6 +125,7 @@ func storeAnswer(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("ClientError in StoreAnswer: Cookie from client has no field user_id")
 		http.Error(w, "Invalid cookie", http.StatusBadRequest)
+		return
 	}
 
 	if cookie.Value == "" {
@@ -139,17 +150,18 @@ func storeAnswer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if !seen.Known(cookie.Value) {
+		log.Println("ClientError in StoreAnswer: Invalid user id in cookie.Value. Client provided: ", cookie.Value)
+		http.Error(w, "Invalid Cookie", http.StatusBadRequest)
+		return
+	}
+
 	response := Response{
 		Status: "success",
 		Pair:   db.increaseCountAndReturnPair(choice),
 	}
 
-	_, exists := SeenPairs[cookie.Value]
-	if !exists {
-		log.Println("ClientError in StoreAnswer: Invalid user id in cookie.Value. Client provided: ", cookie.Value)
-		http.Error(w, "Invalid Cookie", http.StatusBadRequest)
-	}
-
+	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		log.Println("ServerError in StoreAnswer: Failed to encode JSON", cookie.Value)
 		http.Error(w, "Failed to encdode JSON", http.StatusInternalServerError)
