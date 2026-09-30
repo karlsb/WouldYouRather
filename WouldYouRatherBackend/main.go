@@ -32,7 +32,14 @@ func main() {
 			log.Fatal("Error loading .env file")
 		}
 	}
-	db.init("./build-database/wouldyourather.db")
+	dbPath := seedDBPath
+	if p := os.Getenv("DB_PATH"); p != "" {
+		if err := ensureDatabase(p, seedDBPath); err != nil {
+			log.Fatal("Failed to prepare database at ", p, ": ", err)
+		}
+		dbPath = p
+	}
+	db.init(dbPath)
 	defer db.Close()
 	NUMBER_OF_PAIRS = db.getNumberOfPairs()
 
