@@ -3,7 +3,7 @@
 
 ## Live Demo
 
-[https://whatwouldyourather.netlify.app/](https://whatwouldyourather.netlify.app/)
+[https://would-you-rather-vert.vercel.app/](https://would-you-rather-vert.vercel.app/)
 
 ## Features
 
