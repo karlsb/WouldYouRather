@@ -16,8 +16,8 @@
 
 ## Tech Stack
 
-- Frontend: React, TypeScript, TailwindCSS, Netlify
-- Backend: Go, SQLite, Docker, DigitalOcean
+- Frontend: React, TypeScript, TailwindCSS, Vercel
+- Backend: Go, SQLite, Docker, Fly.io
 
 ## Installation & Running Locally
 
@@ -75,3 +75,15 @@ npm run dev
 ```bash
 ./main
 ```
+
+## Deployment
+
+- **Frontend:** Vercel builds `WouldYouRatherClient` on every push. `vercel.json` proxies `/api/*` to the backend.
+- **Backend:** pushes to `main` that change `WouldYouRatherBackend/` are tested and deployed to Fly.io by `.github/workflows/deploy-backend.yml`. To deploy manually:
+
+```bash
+cd WouldYouRatherBackend
+fly deploy --ha=false
+```
+
+The SQLite database lives on the Fly volume `wyr_data` at `/data/wouldyourather.db`. On first boot it's seeded from `build-database/wouldyourather.db`. Later deploys never overwrite it.
