@@ -105,22 +105,22 @@ function App() {
       case GameState.START:
         return (<button onClick={handleOnPlay} className="btn btn-lg btn-wide border-0 shadow-md text-lg text-accent bg-secondary">Start</button>)
       case GameState.PLAY:
-        return (<div className="h-12 w-full"></div>)
+        return (<div className="h-16 w-full"></div>)
       case GameState.ANSWERED:
         return (<button onClick={handleNext} className="btn btn-lg btn-wide border-0 shadow-md text-lg animate-in fade-in text-accent bg-secondary hover:bg-neutral">Next</button>)
       case GameState.END:
-        return (<div className="h-12 w-full"></div>)
+        return (<div className="h-16 w-full"></div>)
     }
   }
 
   return (
-    <div className="h-screen">
+    <div className="min-h-dvh flex flex-col bg-primary">
       <NavBar handleChangeTheme={handleChangeTheme}></NavBar>
-      <div className="h-5/6 flex flex-col justify-center items-center bg-primary text-accent">
-        <div className="w-full h-1/3 flex justify-center items-center">
+      <div className="flex-1 flex flex-col justify-center items-center px-4 lg:px-0 py-4 text-accent">
+        <div className="w-full min-h-[27.778dvh] flex justify-center items-center">
         {mainContent()}
         </div>
-        <div className="w-full h-1/6 flex justify-center">
+        <div className="w-full min-h-[13.889dvh] flex justify-center">
         {startNextButton()}
         </div>
       </div>

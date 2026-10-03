@@ -7,9 +7,9 @@ type DisplayMessageProps = {
 
 export function DisplayMessage(props: DisplayMessageProps){
   return (
-    <div className="flex font-mono text-2xl font-bold">
+    <div className="flex flex-wrap justify-center gap-x-2 text-center text-balance font-mono text-lg sm:text-xl lg:text-2xl font-bold">
       <h1>{props.headingText}</h1>
-      <button onClick={props.handleClick} className="underline ml-2">{props.buttonText}</button>
+      {props.buttonText ? <button onClick={props.handleClick} className="underline">{props.buttonText}</button> : <></>}
     </div>
   )
 }

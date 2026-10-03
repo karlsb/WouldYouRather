@@ -63,14 +63,18 @@ export function CardWrapper(props: CardWrapperProps) {
 
 
   return (
-          <div className="w-4/5  h-full flex flex-wrap items-center justify-center animate-in slide-in-from-left bg-primary">
-            <div className="flex flex-1 flex-col max-w-xl h-full">
-                <Card handleClick={(e) => handleClick("left", e)} state={leftCardState} side="left" choiceMade={choiceMade} text={leftText} id={props.pair.id}></Card>
-                {choiceMade ? <p className="text-center animate-fade font-mono font-bold text-2xl mt-5">{leftPercent}</p> : <></>}
+          <div className="self-start w-full lg:w-4/5 max-w-6xl grid auto-rows-fr sm:grid-cols-2 gap-x-4 animate-in slide-in-from-left bg-primary">
+            <div className="flex flex-col">
+                <Card handleClick={(e) => handleClick("left", e)} state={leftCardState} choiceMade={choiceMade} text={leftText} id={props.pair.id}></Card>
+                <div className="min-h-7 lg:min-h-8 mt-2 mb-5 sm:mt-5 sm:mb-4">
+                  {choiceMade ? <p className="text-center animate-fade font-mono font-bold text-lg sm:text-xl lg:text-2xl">{leftPercent}</p> : <></>}
+                </div>
             </div>
-            <div className="flex flex-1 flex-col max-w-xl h-full">
-                <Card handleClick={(e) => handleClick("right", e)} state={rightCardState} side="right" choiceMade={choiceMade} text={rightText} id={props.pair.id}></Card>
-                {choiceMade ? <p className="text-center animate-fade font-mono font-bold text-2xl mt-5">{rightPercent}</p> : <></>}
+            <div className="flex flex-col">
+                <Card handleClick={(e) => handleClick("right", e)} state={rightCardState} choiceMade={choiceMade} text={rightText} id={props.pair.id}></Card>
+                <div className="min-h-7 lg:min-h-8 mt-2 mb-5 sm:mt-5 sm:mb-4">
+                  {choiceMade ? <p className="text-center animate-fade font-mono font-bold text-lg sm:text-xl lg:text-2xl">{rightPercent}</p> : <></>}
+                </div>
             </div>
           </div>
   )
